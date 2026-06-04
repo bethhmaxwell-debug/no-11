@@ -37,6 +37,59 @@
       line-height: 1.35;
     }
 
+    .app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 250, 247, .94);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 14px 34px;
+    }
+
+    .brand {
+      color: var(--ink);
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      min-height: 32px;
+      padding: 6px 12px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .nav-links a:hover {
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .nav-links a[aria-current="page"] {
+      border-color: rgba(127, 183, 126, .45);
+      background: var(--soft-rich);
+      color: #315a34;
+    }
+
     main {
       max-width: 1280px;
       margin: 0 auto;
@@ -102,6 +155,10 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       box-shadow: 0 18px 42px rgba(36, 49, 58, .08);
+    }
+
+    .mobile-week {
+      display: none;
     }
 
     .view-controls {
@@ -464,6 +521,30 @@
     }
 
     @media (max-width: 900px) {
+      .nav-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 18px;
+      }
+
+      .brand {
+        font-size: 15px;
+      }
+
+      .nav-links {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .nav-links a {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
       main {
         padding: 18px;
       }
@@ -488,6 +569,77 @@
 
       h1 {
         font-size: 32px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .schedule {
+        display: none;
+      }
+
+      .mobile-week {
+        display: block;
+      }
+
+      .day-tabs {
+        display: flex;
+        gap: 8px;
+        margin: 0 0 14px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .day-tab {
+        flex: 0 0 auto;
+        min-height: 38px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .day-tab[aria-selected="true"] {
+        border-color: rgba(111, 168, 220, .5);
+        background: var(--soft-you);
+        color: var(--ink);
+      }
+
+      .day-panel {
+        display: none;
+        gap: 12px;
+      }
+
+      .day-panel.is-active {
+        display: grid;
+      }
+
+      .mobile-day-title {
+        margin: 4px 0 2px;
+        font-size: 24px;
+      }
+
+      .day-section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 10px 28px rgba(36, 49, 58, .06);
+      }
+
+      .day-section h3 {
+        margin: 0 0 10px;
+        color: #526169;
+        font-size: 12px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .day-section .compact-map {
+        gap: 8px;
       }
     }
 
@@ -554,6 +706,16 @@
   </style>
 </head>
 <body>
+  <nav class="app-nav" aria-label="App navigation">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">Personal App Hub</a>
+      <div class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="finance-forecast/">Finance</a>
+        <a href="balanced-working-week.html" aria-current="page">Working Week</a>
+      </div>
+    </div>
+  </nav>
   <main>
     <header>
       <div>
@@ -854,6 +1016,92 @@
         </div></div>
       </div>
     </section>
+
+    <section class="mobile-week" aria-label="Mobile weekly schedule">
+      <div class="day-tabs" role="tablist" aria-label="Choose a day">
+        <button class="day-tab" type="button" role="tab" aria-selected="true" aria-controls="monday-panel" id="monday-tab" data-day-tab="monday">Mon</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="tuesday-panel" id="tuesday-tab" data-day-tab="tuesday">Tue</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="wednesday-panel" id="wednesday-tab" data-day-tab="wednesday">Wed</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="thursday-panel" id="thursday-tab" data-day-tab="thursday">Thu</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="friday-panel" id="friday-tab" data-day-tab="friday">Fri</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="saturday-panel" id="saturday-tab" data-day-tab="saturday">Sat</button>
+        <button class="day-tab" type="button" role="tab" aria-selected="false" aria-controls="sunday-panel" id="sunday-tab" data-day-tab="sunday">Sun</button>
+      </div>
+
+      <article class="day-panel is-active" role="tabpanel" id="monday-panel" aria-labelledby="monday-tab" data-day-panel="monday">
+        <h2 class="mobile-day-title">Monday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>London office, full work day</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Nursery drop-off</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Nursery pick-up</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Serve batch dinner</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Bath + bedtime</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Kitchen basics only</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="tuesday-panel" aria-labelledby="tuesday-tab" data-day-panel="tuesday">
+        <h2 class="mobile-day-title">Tuesday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Nursery drop-off</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Nursery pick-up</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Serve quick dinner</span></div><div class="status-line beth"><span class="label">Beth</span><span>Yoga 6.45pm</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Lead bedtime</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line shared"><span class="label">Both</span><span>10-minute reset + nursery bag check</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="wednesday-panel" aria-labelledby="wednesday-tab" data-day-panel="wednesday">
+        <h2 class="mobile-day-title">Wednesday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Jude day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Jude home with Rich</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Serve Jude dinner</span></div><div class="status-line beth"><span class="label">Beth</span><span>Run club fortnightly</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Bedtime on run weeks</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Start laundry load</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="thursday-panel" aria-labelledby="thursday-tab" data-day-panel="thursday">
+        <h2 class="mobile-day-title">Thursday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Nursery drop-off</span></div><div class="status-line beth"><span class="label">Beth</span><span>Nursery pick-up</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Serve simple dinner</span></div><div class="status-line beth"><span class="label">Beth</span><span>Bedtime lead</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Bins + recycling</span></div><div class="status-line beth"><span class="label">Beth</span><span>Food check + shop</span></div><div class="status-line shared"><span class="label">Both</span><span>Surfaces + laundry away</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="friday-panel" aria-labelledby="friday-tab" data-day-panel="friday">
+        <h2 class="mobile-day-title">Friday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Jude day</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Jude home with Beth</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line rich-person"><span class="label">Rich</span><span>Serve family dinner</span></div><div class="status-line rich-person"><span class="label">Rich</span><span>Bedtime on date nights</span></div><div class="status-line shared"><span class="label">Both</span><span>Alternate otherwise</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line beth"><span class="label">Beth</span><span>Light tidy only</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="saturday-panel" aria-labelledby="saturday-tab" data-day-panel="saturday">
+        <h2 class="mobile-day-title">Saturday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line social"><span class="label">Both</span><span>Social / family day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line social"><span class="label">Both</span><span>Social / family</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line social"><span class="label">Both</span><span>Flexible / social plans</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line shared"><span class="label">Both</span><span>Optional 30-minute clean</span></div></div></section>
+      </article>
+
+      <article class="day-panel" role="tabpanel" id="sunday-panel" aria-labelledby="sunday-tab" data-day-panel="sunday">
+        <h2 class="mobile-day-title">Sunday</h2>
+        <section class="day-section"><h3>Work + Location</h3><div class="compact-map"><div class="status-line social"><span class="label">Both</span><span>Family reset day</span></div></div></section>
+        <section class="day-section"><h3>Nursery</h3><div class="compact-map"><div class="status-line social"><span class="label">Both</span><span>Social / family</span></div></div></section>
+        <section class="day-section"><h3>Dinner + Evening</h3><div class="compact-map"><div class="status-line shared"><span class="label">Both</span><span>Batch cook + calm bedtime</span></div></div></section>
+        <section class="day-section"><h3>Chores</h3><div class="compact-map"><div class="status-line shared"><span class="label">Both</span><span>Shop, batch cook, laundry + calendar check</span></div></div></section>
+      </article>
+    </section>
   </main>
+  <script>
+    const dayTabs = document.querySelectorAll('[data-day-tab]');
+    const dayPanels = document.querySelectorAll('[data-day-panel]');
+
+    dayTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const selectedDay = tab.dataset.dayTab;
+
+        dayTabs.forEach((item) => {
+          item.setAttribute('aria-selected', String(item === tab));
+        });
+
+        dayPanels.forEach((panel) => {
+          panel.classList.toggle('is-active', panel.dataset.dayPanel === selectedDay);
+        });
+      });
+    });
+  </script>
 </body>
 </html>
