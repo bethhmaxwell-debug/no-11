@@ -98,10 +98,10 @@
 
       .hero {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 320px;
+        grid-template-columns: minmax(0, 1fr) 386px;
         gap: 56px;
         align-items: center;
-        margin-bottom: 58px;
+        margin-bottom: 54px;
       }
 
       .eyebrow {
@@ -134,19 +134,28 @@
         font-size: 20px;
       }
 
-      .home-mark {
-        display: grid;
-        place-items: center;
-        min-height: 250px;
+      .family-card {
         border: 1px solid var(--line);
-        border-radius: 34px;
+        border-radius: 30px;
         background: rgba(255, 253, 247, .76);
         box-shadow: var(--shadow);
+        padding: 22px;
       }
 
-      .home-mark svg {
-        width: min(230px, 78%);
-        height: auto;
+      .family-card img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 24px;
+        object-fit: cover;
+      }
+
+      .family-card p {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 15px;
+        font-weight: 850;
+        text-align: center;
       }
 
       .section-heading {
@@ -172,8 +181,10 @@
 
       .app-card {
         display: grid;
-        gap: 22px;
-        min-height: 218px;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+        min-height: 172px;
         border: 1px solid var(--line);
         border-radius: 24px;
         background: var(--panel);
@@ -190,10 +201,11 @@
       .app-icon {
         display: grid;
         place-items: center;
-        width: 62px;
-        height: 62px;
-        border-radius: 18px;
-        font-size: 31px;
+        width: 74px;
+        height: 74px;
+        border-radius: 24px;
+        box-shadow: inset 0 -7px 14px rgba(38, 48, 42, .06);
+        font-size: 36px;
         font-weight: 950;
       }
 
@@ -302,14 +314,13 @@
           font-size: 17px;
         }
 
-        .home-mark {
+        .family-card {
           width: 100%;
-          min-height: 190px;
           border-radius: 28px;
         }
 
-        .home-mark svg {
-          width: 190px;
+        .family-card img {
+          max-height: 280px;
         }
 
         .app-list {
@@ -317,9 +328,7 @@
         }
 
         .app-card {
-          min-height: 150px;
-          grid-template-columns: auto minmax(0, 1fr);
-          align-items: center;
+          min-height: 126px;
         }
 
         .update-note {
@@ -348,13 +357,9 @@
           <h1 id="page-title">A home base for family life.</h1>
           <p class="intro">Money, time and meals in one calm shared place, so the week feels a little easier to hold.</p>
         </div>
-        <div class="home-mark" aria-label="Home and heart illustration">
-          <svg viewBox="0 0 260 210" role="img" aria-label="A simple home with a heart">
-            <path d="M58 114 L130 54 L202 114 V178 H158 V134 H102 V178 H58 Z" fill="#e9f4df" stroke="#2f6d4f" stroke-width="7" stroke-linejoin="round"/>
-            <path d="M86 106 C94 76 119 77 130 101 C141 77 166 76 174 106 C183 140 148 154 130 178 C112 154 77 140 86 106 Z" fill="#f8d8c8" stroke="#c6653b" stroke-width="6"/>
-            <circle cx="82" cy="68" r="14" fill="#2f6d4f"/>
-            <circle cx="178" cy="68" r="14" fill="#2f6d4f"/>
-          </svg>
+        <div class="family-card">
+          <img src="family.png" alt="Illustrated family portrait">
+          <p>Made for home, love and logistics.</p>
         </div>
       </section>
 
@@ -366,7 +371,7 @@
 
         <div class="app-list">
           <a class="app-card finance" href="finance-forecast/">
-            <div class="app-icon" aria-hidden="true">£</div>
+            <div class="app-icon" aria-hidden="true">💷</div>
             <div>
               <span>Finance</span>
               <strong>Finance Forecast</strong>
