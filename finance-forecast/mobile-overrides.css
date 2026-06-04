@@ -1,0 +1,289 @@
+@media only screen and (max-width: 1100px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    padding-bottom: 28px;
+  }
+
+  .app-nav-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .app-brand {
+    font-size: 15px;
+  }
+
+  .app-links {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .app-links a {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .top-nav {
+    position: static;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: auto;
+    padding: 14px 16px;
+  }
+
+  .nav-brand,
+  .ghost-button {
+    justify-self: stretch;
+  }
+
+  .scenario-toggle {
+    width: 100%;
+    border-radius: 18px;
+    overflow-x: auto;
+  }
+
+  .scenario-toggle button {
+    flex: 0 0 auto;
+  }
+
+  .hero-ticker {
+    padding: 18px 16px;
+  }
+
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .hero-ticker p {
+    max-width: 100%;
+    font-size: 22px;
+    line-height: 1.25;
+  }
+
+  .scenario-explainer {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+
+  .report-controls {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .report-controls label,
+  .report-controls .ghost-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .kpi-row {
+    gap: 12px;
+    max-width: 100%;
+    padding: 16px 16px 10px;
+    scroll-padding-inline: 16px;
+  }
+
+  .kpi-card {
+    flex-basis: 190px;
+    min-height: 118px;
+    padding: 15px;
+  }
+
+  .kpi-card strong {
+    font-size: 26px;
+  }
+
+  .alert-pills {
+    gap: 8px;
+    max-width: 100%;
+    padding: 0 16px 18px;
+    scroll-padding-inline: 16px;
+  }
+
+  .alert-pill {
+    align-items: flex-start;
+    max-width: 280px;
+    min-height: 0;
+    border-radius: 14px;
+    padding: 10px 12px;
+    white-space: normal;
+  }
+
+  .alert-pill i {
+    flex: 0 0 auto;
+    margin-top: 5px;
+  }
+
+  .forecast-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 100%;
+    padding: 0 16px;
+  }
+
+  .side-stack {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .panel,
+  .chart-card,
+  .table-panel {
+    border-radius: 18px;
+  }
+
+  .panel-heading {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
+  }
+
+  .compact-panel > .control-row,
+  .saved-view-form,
+  .plan-file-actions,
+  .saved-view-list,
+  .events-list {
+    padding: 16px;
+  }
+
+  .control-row,
+  .saved-view-form,
+  .plan-file-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .saved-view-form,
+  .field-grid,
+  .custom-expense-row,
+  .custom-income-row,
+  .event-card-summary,
+  .event-row,
+  .annual-row {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-income-labels {
+    display: none;
+  }
+
+  .custom-expenses-heading,
+  .saved-view-list article,
+  .row-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .row-actions button,
+  .plan-file-actions button,
+  .saved-view-form button,
+  .event-row button,
+  .annual-row button,
+  .custom-expense-row button,
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+  }
+
+  .event-row button,
+  .annual-row button,
+  .custom-expense-row button {
+    min-width: 0;
+    font-size: 18px;
+  }
+
+  .accordion summary {
+    padding: 16px 42px 16px 16px;
+  }
+
+  .accordion-content,
+  .accordion[open] .accordion-content {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .chart-tabs {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .chart-tabs button {
+    flex: 0 0 auto;
+    padding-inline: 14px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .chart-card,
+  .chart-card.wide {
+    grid-column: auto;
+    min-height: 300px;
+    padding: 14px;
+  }
+
+  .chart-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mini-chart {
+    min-height: 260px;
+  }
+
+  .chart-tooltip {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+  }
+
+  .table-section {
+    max-width: 100%;
+    padding: 0 16px;
+  }
+
+  .table-wrap {
+    max-height: 480px;
+  }
+
+  table {
+    min-width: 920px;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 11px 12px;
+  }
+}
