@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Our Balanced Working Week</title>
+  <style>
+    :root {
+      --ink: #24313a;
+      --muted: #687780;
+      --line: #dce5e2;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --you: #6fa8dc;
+      --rich: #7fb77e;
+      --shared: #f4c95d;
+      --protected: #e89aa6;
+      --nursery: #b9c0c9;
+      --family: #c8a2c8;
+      --soft-you: #eaf4ff;
+      --soft-rich: #eef7ec;
+      --soft-shared: #fff7df;
+      --soft-protected: #fff0f3;
+      --soft-nursery: #f1f3f5;
+      --soft-family: #f7eff8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.35;
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 34px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 42px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(36, 49, 58, .06);
+    }
+
+    .legend-item,
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(36, 49, 58, .15);
+      flex: 0 0 auto;
+    }
+
+    .schedule {
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(36, 49, 58, .08);
+    }
+
+    .view-controls {
+      display: none;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 14px;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(36, 49, 58, .06);
+    }
+
+    .view-buttons,
+    .person-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .view-button,
+    .person-button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8faf9;
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 11px;
+      cursor: pointer;
+    }
+
+    .view-button[aria-pressed="true"],
+    .person-button[aria-pressed="true"] {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: #fff;
+    }
+
+    .person-switch {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .person-switch.is-visible {
+      display: flex;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 132px repeat(7, minmax(120px, 1fr));
+    }
+
+    .cell {
+      min-height: 92px;
+      padding: 12px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cell:nth-child(8n) {
+      border-right: 0;
+    }
+
+    .day,
+    .row-label {
+      background: #f4f0ea;
+      font-weight: 800;
+    }
+
+    .day {
+      min-height: 56px;
+      text-align: center;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .row-label {
+      color: #526169;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      display: flex;
+      align-items: center;
+    }
+
+    .block {
+      display: grid;
+      gap: 5px;
+      min-height: 100%;
+      padding: 10px;
+      border-left: 5px solid;
+      border-radius: 8px;
+      align-content: start;
+    }
+
+    .block strong {
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .block span {
+      color: #4c5b64;
+      font-size: 12.5px;
+    }
+
+    .work-option {
+      display: none;
+      min-height: 100%;
+    }
+
+    .work-option[data-option="c"] {
+      display: grid;
+      gap: 8px;
+    }
+
+    .work-stack,
+    .split-lanes,
+    .compact-map,
+    .focus-card {
+      display: grid;
+      gap: 8px;
+      min-height: 100%;
+    }
+
+    .mini-card {
+      display: grid;
+      gap: 3px;
+      padding: 9px;
+      border-left: 5px solid;
+      border-radius: 8px;
+    }
+
+    .mini-card strong,
+    .lane strong,
+    .focus-card strong {
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .mini-card span,
+    .lane span,
+    .focus-card span {
+      color: #4c5b64;
+      font-size: 12px;
+    }
+
+    .mini-card.beth,
+    .lane.beth,
+    .focus-card.beth {
+      background: var(--soft-you);
+      border-color: var(--you);
+    }
+
+    .mini-card.rich-person,
+    .lane.rich-person,
+    .focus-card.rich-person {
+      background: var(--soft-rich);
+      border-color: var(--rich);
+    }
+
+    .mini-card.off,
+    .lane.off,
+    .focus-card.off {
+      background: #fbfbfa;
+      border-color: #d9dedc;
+    }
+
+    .split-lanes {
+      grid-template-columns: 1fr;
+    }
+
+    .lane {
+      min-height: 58px;
+      padding: 8px;
+      border-left: 5px solid;
+      border-radius: 8px;
+    }
+
+    .name-pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 22px;
+      margin-bottom: 5px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(36, 49, 58, .08);
+      color: #34434b;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .status-line {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 32px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      background: #f8faf9;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status-line.beth {
+      background: var(--soft-you);
+      border-color: rgba(111, 168, 220, .45);
+      border-left: 5px solid var(--you);
+    }
+
+    .status-line.rich-person {
+      background: var(--soft-rich);
+      border-color: rgba(127, 183, 126, .45);
+      border-left: 5px solid var(--rich);
+    }
+
+    .status-line.shared {
+      background: var(--soft-shared);
+      border-color: rgba(244, 201, 93, .5);
+      border-left: 5px solid var(--shared);
+    }
+
+    .status-line.nursery {
+      background: var(--soft-nursery);
+      border-color: rgba(185, 192, 201, .55);
+      border-left: 5px solid var(--nursery);
+    }
+
+    .status-line.protected {
+      background: var(--soft-protected);
+      border-color: rgba(232, 154, 166, .5);
+      border-left: 5px solid var(--protected);
+    }
+
+    .status-line.social {
+      background: var(--soft-family);
+      border-color: rgba(200, 162, 200, .45);
+      border-left: 5px solid var(--family);
+    }
+
+    .status-line .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .focus-card {
+      padding: 12px;
+      border-left: 5px solid;
+      border-radius: 8px;
+    }
+
+    .focus-card[data-person-card] {
+      display: none;
+    }
+
+    .focus-card[data-person-card].is-active {
+      display: grid;
+    }
+
+    .you {
+      background: var(--soft-you);
+      border-color: var(--you);
+    }
+
+    .rich {
+      background: var(--soft-rich);
+      border-color: var(--rich);
+    }
+
+    .shared {
+      background: var(--soft-shared);
+      border-color: var(--shared);
+    }
+
+    .protected {
+      background: var(--soft-protected);
+      border-color: var(--protected);
+    }
+
+    .nursery {
+      background: var(--soft-nursery);
+      border-color: var(--nursery);
+    }
+
+    .family {
+      background: var(--soft-family);
+      border-color: var(--family);
+    }
+
+    .empty {
+      color: #879198;
+      background: #fbfbfa;
+      border-color: #e4e8e6;
+    }
+
+    .bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(36, 49, 58, .06);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin: 8px 0;
+      color: #42515a;
+      font-size: 14px;
+    }
+
+    .conversation {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .question {
+      min-height: 90px;
+      padding: 12px;
+      background: #f8faf9;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        padding: 18px;
+      }
+
+      header,
+      .bottom,
+      .conversation {
+        grid-template-columns: 1fr;
+      }
+
+      .view-controls {
+        align-items: stretch;
+      }
+
+      .schedule {
+        overflow-x: auto;
+      }
+
+      .grid {
+        min-width: 1080px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      .schedule,
+      .panel,
+      .legend {
+        box-shadow: none;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+
+      .cell {
+        min-height: 78px;
+        padding: 8px;
+      }
+
+      .block {
+        padding: 7px;
+      }
+
+      .block strong {
+        font-size: 12px;
+      }
+
+      .block span,
+      .mini-card span,
+      .lane span,
+      .focus-card span,
+      li,
+      .question {
+        font-size: 10.5px;
+      }
+
+      .view-controls {
+        display: none;
+      }
+
+      .bottom {
+        gap: 10px;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Our Balanced Working Week</h1>
+        <p class="subtitle">A shared rhythm for work, Jude, movement, meals, chores, recovery, and time together. Wednesday run club is fortnightly so Rich's Jude day has a gentler landing.</p>
+      </div>
+      <section class="legend" aria-label="Colour key">
+        <div class="legend-item"><span class="swatch" style="background: var(--you)"></span>Beth leads</div>
+        <div class="legend-item"><span class="swatch" style="background: var(--rich)"></span>Rich leads</div>
+        <div class="legend-item"><span class="swatch" style="background: var(--shared)"></span>Shared</div>
+        <div class="legend-item"><span class="swatch" style="background: var(--family)"></span>Family / social</div>
+      </section>
+    </header>
+
+    <section class="schedule" aria-label="Weekly schedule">
+      <div class="grid">
+        <div class="cell day"></div>
+        <div class="cell day">Monday</div>
+        <div class="cell day">Tuesday</div>
+        <div class="cell day">Wednesday</div>
+        <div class="cell day">Thursday</div>
+        <div class="cell day">Friday</div>
+        <div class="cell day">Saturday</div>
+        <div class="cell day">Sunday</div>
+
+        <div class="cell row-label">Work + Location</div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth"><strong>Beth: London office</strong><span>Work day. Leave 7.30am, home around 7.30pm.</span></div>
+              <div class="mini-card rich-person"><strong>Rich: WFH</strong><span>Work day. Also owns nursery pick-up and bedtime.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth"><span class="name-pill">Beth</span><strong>London office</strong><span>7.30am to 7.30pm door-to-door.</span></div>
+              <div class="lane rich-person"><span class="name-pill">Rich</span><strong>Work from home</strong><span>Nursery/evening lead.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line beth"><span class="label">Beth</span><span>London office, full work day</span></div>
+              <div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth is-active" data-person-card="beth"><strong>Beth</strong><span>London office. Work day, 7.30am to 7.30pm door-to-door.</span></div>
+            <div class="focus-card rich-person" data-person-card="rich"><strong>Rich</strong><span>Work from home. Work day, plus nursery and evening lead.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth"><strong>Beth: WFH</strong><span>Work day. Jude at nursery 9am to 5pm.</span></div>
+              <div class="mini-card rich-person"><strong>Rich: WFH</strong><span>Work day. Picks Jude up to protect yoga.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth"><span class="name-pill">Beth</span><strong>Work from home</strong><span>Yoga protected in the evening.</span></div>
+              <div class="lane rich-person"><span class="name-pill">Rich</span><strong>Work from home</strong><span>Pick-up and bedtime lead.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div>
+              <div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth is-active" data-person-card="beth"><strong>Beth</strong><span>Work from home. Work day, with yoga protected at 6.45pm.</span></div>
+            <div class="focus-card rich-person" data-person-card="rich"><strong>Rich</strong><span>Work from home. Work day, then pick-up and bedtime lead.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth"><strong>Beth: WFH</strong><span>Work day.</span></div>
+              <div class="mini-card rich-person off"><strong>Rich: not working</strong><span>Solo Jude day. No nursery.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth"><span class="name-pill">Beth</span><strong>Work from home</strong><span>Fortnightly run club in the evening.</span></div>
+              <div class="lane rich-person off"><span class="name-pill">Rich</span><strong>Not working</strong><span>Jude day.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div>
+              <div class="status-line rich-person"><span class="label">Rich</span><span>Jude day</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth is-active" data-person-card="beth"><strong>Beth</strong><span>Work from home. Fortnightly run club; home weeks you lead bedtime.</span></div>
+            <div class="focus-card rich-person off" data-person-card="rich"><strong>Rich</strong><span>Not working. Solo Jude day, so evening load should be lighter.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth"><strong>Beth: WFH</strong><span>Work day. Jude at nursery 9am to 5pm.</span></div>
+              <div class="mini-card rich-person"><strong>Rich: WFH</strong><span>Work day.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth"><span class="name-pill">Beth</span><strong>Work from home</strong><span>Drop-off and pick-up.</span></div>
+              <div class="lane rich-person"><span class="name-pill">Rich</span><strong>Work from home</strong><span>Serves dinner.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line beth"><span class="label">Beth</span><span>WFH, full work day</span></div>
+              <div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth is-active" data-person-card="beth"><strong>Beth</strong><span>Work from home. Nursery drop-off and pick-up.</span></div>
+            <div class="focus-card rich-person" data-person-card="rich"><strong>Rich</strong><span>Work from home. Serves dinner so Thursday does not all land on Beth.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth off"><strong>Beth: not working</strong><span>Solo Jude day.</span></div>
+              <div class="mini-card rich-person"><strong>Rich: WFH</strong><span>Work day.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth off"><span class="name-pill">Beth</span><strong>Not working</strong><span>Jude day.</span></div>
+              <div class="lane rich-person"><span class="name-pill">Rich</span><strong>Work from home</strong><span>Serves dinner.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line beth"><span class="label">Beth</span><span>Jude day</span></div>
+              <div class="status-line rich-person"><span class="label">Rich</span><span>WFH, full work day</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth off is-active" data-person-card="beth"><strong>Beth</strong><span>Not working. Solo Jude day; light tidy only.</span></div>
+            <div class="focus-card rich-person" data-person-card="rich"><strong>Rich</strong><span>Work from home. Serves dinner; bedtime is shared or alternated.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth off"><strong>Beth: not working</strong><span>Family / social day.</span></div>
+              <div class="mini-card rich-person off"><strong>Rich: not working</strong><span>Family / social day.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth off"><span class="name-pill">Beth</span><strong>Not working</strong><span>Social / family.</span></div>
+              <div class="lane rich-person off"><span class="name-pill">Rich</span><strong>Not working</strong><span>Social / family.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line social"><span class="label">Beth</span><span>Social / family</span></div>
+              <div class="status-line social"><span class="label">Rich</span><span>Social / family</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth off is-active" data-person-card="beth"><strong>Beth</strong><span>Not working. Keep flexible for family and social plans.</span></div>
+            <div class="focus-card rich-person off" data-person-card="rich"><strong>Rich</strong><span>Not working. Keep flexible for family and social plans.</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="work-option is-active" data-option="a">
+            <div class="work-stack">
+              <div class="mini-card beth off"><strong>Beth: not working</strong><span>Family reset day.</span></div>
+              <div class="mini-card rich-person off"><strong>Rich: not working</strong><span>Family reset day.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="b">
+            <div class="split-lanes">
+              <div class="lane beth off"><span class="name-pill">Beth</span><strong>Not working</strong><span>Reset and prep.</span></div>
+              <div class="lane rich-person off"><span class="name-pill">Rich</span><strong>Not working</strong><span>Reset and prep.</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="c">
+            <div class="compact-map">
+              <div class="status-line social"><span class="label">Beth</span><span>Social / family</span></div>
+              <div class="status-line social"><span class="label">Rich</span><span>Social / family</span></div>
+            </div>
+          </div>
+          <div class="work-option" data-option="d">
+            <div class="focus-card beth off is-active" data-person-card="beth"><strong>Beth</strong><span>Not working. Shared shop, batch cook, laundry, and calendar check.</span></div>
+            <div class="focus-card rich-person off" data-person-card="rich"><strong>Rich</strong><span>Not working. Shared shop, batch cook, laundry, and calendar check.</span></div>
+          </div>
+        </div>
+
+        <div class="cell row-label">Nursery</div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Nursery drop-off</span></div>
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Nursery pick-up</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Nursery drop-off</span></div>
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Nursery pick-up</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Jude home with Rich</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Nursery drop-off</span></div>
+          <div class="status-line beth"><span class="label">Beth</span><span>Nursery pick-up</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Jude home with Beth</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line social"><span class="label">Both</span><span>Social / family</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line social"><span class="label">Both</span><span>Social / family</span></div>
+        </div></div>
+
+        <div class="cell row-label">Dinner</div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Serve batch dinner</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Serve quick dinner</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Serve Jude dinner</span></div>
+          <div class="status-line shared"><span class="label">Both</span><span>Adults: leftovers later</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Serve simple dinner</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Serve family dinner</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line social"><span class="label">Both</span><span>Flexible / social plans</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line shared"><span class="label">Both</span><span>Batch cook + reset meal</span></div>
+        </div></div>
+
+        <div class="cell row-label">Evening</div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Bath + bedtime</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>🧘 Yoga 6.45pm</span></div>
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Lead bedtime</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>🏃 Run club fortnightly</span></div>
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Bedtime on run weeks</span></div>
+          <div class="status-line beth"><span class="label">Beth</span><span>Bedtime on home weeks</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Bedtime lead</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Bedtime on date nights</span></div>
+          <div class="status-line shared"><span class="label">Both</span><span>Alternate otherwise</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line social"><span class="label">Both</span><span>Social / family</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line shared"><span class="label">Both</span><span>Calm bedtime</span></div>
+        </div></div>
+
+        <div class="cell row-label">Chores</div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Kitchen basics only</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line shared"><span class="label">Both</span><span>10-minute reset</span></div>
+          <div class="status-line shared"><span class="label">Both</span><span>Nursery bag check</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Start laundry load</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line rich-person"><span class="label">Rich</span><span>Bins + recycling</span></div>
+          <div class="status-line beth"><span class="label">Beth</span><span>Food check + shop</span></div>
+          <div class="status-line shared"><span class="label">Both</span><span>Surfaces + laundry away</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line beth"><span class="label">Beth</span><span>Light tidy only</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line shared"><span class="label">Both</span><span>Optional 30-min clean</span></div>
+        </div></div>
+        <div class="cell"><div class="compact-map">
+          <div class="status-line shared"><span class="label">Both</span><span>Shop + batch cook</span></div>
+          <div class="status-line shared"><span class="label">Both</span><span>Laundry + calendar check</span></div>
+        </div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
