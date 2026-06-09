@@ -575,10 +575,30 @@
       }
 
       .shopping-list li {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
         border: 1px solid var(--line);
-        border-radius: 999px;
+        border-radius: 18px;
         background: #fff;
-        padding: 9px 13px;
+        padding: 10px 12px;
+      }
+
+      .shopping-list input {
+        min-height: 36px;
+        border-radius: 12px;
+      }
+
+      .shopping-source {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .remove-item {
+        width: 36px;
+        min-height: 36px;
+        padding: 0;
       }
 
       .missing-ingredients {
@@ -704,6 +724,14 @@
         .meal-form-actions {
           flex-direction: column;
         }
+
+        .shopping-list li {
+          grid-template-columns: 1fr auto;
+        }
+
+        .shopping-source {
+          grid-column: 1 / -1;
+        }
       }
     </style>
   </head>
@@ -784,6 +812,8 @@
           <div class="drawer-actions">
             <button class="primary" type="button" id="generate-shopping">Generate list</button>
             <button type="button" id="select-all-meals">Select all planned meals</button>
+            <button type="button" id="clear-all-meals">Unselect all</button>
+            <button type="button" id="share-shopping">Share list</button>
           </div>
           <div class="shopping-meals" id="shopping-meals"></div>
           <div class="shopping-results" id="shopping-results"></div>
@@ -894,6 +924,7 @@
       let activeSlot = null;
       let activeFilter = "recommended";
       let selectedShoppingMeals = new Set(loadShoppingSelection());
+      let generatedShoppingItems = [];
 
       function loadState() {
         const saved = localStorage.getItem(storageKey);
@@ -1246,27 +1277,92 @@
             if (event.target.checked) selectedShoppingMeals.add(slot.id);
             else selectedShoppingMeals.delete(slot.id);
             saveShoppingSelection();
+            generatedShoppingItems = [];
+            renderShoppingResults();
           });
           root.append(label);
         });
       }
 
-      function renderShoppingResults() {
-        const root = document.getElementById("shopping-results");
+      function generateShoppingItems() {
         const selected = plannedMealSlots().filter((slot) => selectedShoppingMeals.has(slot.id));
-        const ingredients = [];
+        const ingredientMap = new Map();
         const missing = [];
         selected.forEach((slot) => {
-          if (slot.details.ingredients.length) ingredients.push(...slot.details.ingredients);
-          else missing.push(`${slot.week} ${slot.day}: ${slot.details.shortName}`);
+          if (!slot.details.ingredients.length) {
+            missing.push(`${slot.week} ${slot.day}: ${slot.details.shortName}`);
+            return;
+          }
+          slot.details.ingredients.forEach((ingredient) => {
+            const clean = ingredient.trim();
+            if (!clean) return;
+            const key = clean.toLowerCase();
+            const existing = ingredientMap.get(key) || { text: clean, meals: new Set() };
+            existing.meals.add(slot.details.shortName);
+            ingredientMap.set(key, existing);
+          });
         });
 
-        const uniqueIngredients = [...new Set(ingredients.map((item) => item.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        generatedShoppingItems = [...ingredientMap.values()]
+          .map((item, index) => ({ id: `${Date.now()}-${index}`, text: item.text, meals: [...item.meals].sort() }))
+          .sort((a, b) => a.text.localeCompare(b.text));
+
+        renderShoppingResults(missing);
+      }
+
+      function renderShoppingResults(missing = []) {
+        const root = document.getElementById("shopping-results");
         root.innerHTML = `
-          <strong>${uniqueIngredients.length ? "Shopping list" : "No ingredients yet"}</strong>
-          ${uniqueIngredients.length ? `<ul class="shopping-list">${uniqueIngredients.map((item) => `<li>${item}</li>`).join("")}</ul>` : `<span>Add ingredients to meals in the Meal bank, then generate again.</span>`}
+          <strong>${generatedShoppingItems.length ? "Shopping list" : "No ingredients yet"}</strong>
+          ${generatedShoppingItems.length ? `<ul class="shopping-list">${generatedShoppingItems.map((item) => `
+            <li data-item-id="${item.id}">
+              <input type="text" value="${escapeAttr(item.text)}" aria-label="Shopping item">
+              <span class="shopping-source">${item.meals.join(", ")}</span>
+              <button class="remove-item" type="button" aria-label="Remove ${escapeAttr(item.text)}">x</button>
+            </li>
+          `).join("")}</ul>` : `<span>Select meals and generate a list. Add ingredients to meals in the Meal bank if nothing appears.</span>`}
           ${missing.length ? `<div class="missing-ingredients"><strong>Meals missing ingredients</strong><br>${missing.join("<br>")}</div>` : ""}
         `;
+
+        root.querySelectorAll("[data-item-id]").forEach((row) => {
+          const item = generatedShoppingItems.find((entry) => entry.id === row.dataset.itemId);
+          row.querySelector("input").addEventListener("input", (event) => {
+            item.text = event.target.value;
+          });
+          row.querySelector(".remove-item").addEventListener("click", () => {
+            generatedShoppingItems = generatedShoppingItems.filter((entry) => entry.id !== row.dataset.itemId);
+            renderShoppingResults();
+          });
+        });
+      }
+
+      function escapeAttr(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      }
+
+      function shoppingListText() {
+        if (!generatedShoppingItems.length) generateShoppingItems();
+        const lines = generatedShoppingItems
+          .map((item) => item.text.trim() ? `- ${item.text.trim()} (${item.meals.join(", ")})` : "")
+          .filter(Boolean);
+        return `Shopping list\n\n${lines.join("\n")}`;
+      }
+
+      async function shareShoppingList() {
+        const text = shoppingListText();
+        if (!generatedShoppingItems.length) {
+          renderShoppingResults();
+          return;
+        }
+        if (navigator.share) {
+          await navigator.share({ title: "Shopping list", text });
+          return;
+        }
+        await navigator.clipboard.writeText(text);
+        document.getElementById("share-shopping").textContent = "Copied";
+        setTimeout(() => {
+          document.getElementById("share-shopping").textContent = "Share list";
+        }, 1400);
       }
 
       document.querySelectorAll(".week-tab").forEach((button) => {
@@ -1284,14 +1380,23 @@
       document.getElementById("close-shopping").addEventListener("click", closeShopping);
       document.getElementById("generate-shopping").addEventListener("click", () => {
         saveShoppingSelection();
-        renderShoppingResults();
+        generateShoppingItems();
       });
       document.getElementById("select-all-meals").addEventListener("click", () => {
         plannedMealSlots().forEach((slot) => selectedShoppingMeals.add(slot.id));
         saveShoppingSelection();
+        generatedShoppingItems = [];
         renderShoppingMeals();
         renderShoppingResults();
       });
+      document.getElementById("clear-all-meals").addEventListener("click", () => {
+        selectedShoppingMeals.clear();
+        generatedShoppingItems = [];
+        saveShoppingSelection();
+        renderShoppingMeals();
+        renderShoppingResults();
+      });
+      document.getElementById("share-shopping").addEventListener("click", shareShoppingList);
 
       document.getElementById("picker-overlay").addEventListener("click", (event) => {
         if (event.target.id === "picker-overlay") closePicker();
