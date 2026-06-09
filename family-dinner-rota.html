@@ -529,24 +529,113 @@
 
       .shopping-layout {
         display: grid;
-        gap: 18px;
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .shopping-picker {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        width: min(960px, 100%);
+        max-height: min(780px, calc(100vh - 36px));
+        overflow: hidden;
+      }
+
+      .shopping-stage {
+        display: grid;
+        gap: 16px;
+        min-height: 0;
+      }
+
+      .shopping-stage[hidden] {
+        display: none;
+      }
+
+      .shopping-steps {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin: 4px 0 18px;
+        color: var(--muted);
+        font-weight: 900;
+      }
+
+      .shopping-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .step-badge {
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--muted);
+      }
+
+      .shopping-step.is-active {
+        color: var(--ink);
+      }
+
+      .shopping-step.is-active .step-badge {
+        border-color: var(--green);
+        background: var(--green);
+        color: #fff;
+      }
+
+      .shopping-step.is-complete .step-badge {
+        border-color: var(--green);
+        color: var(--green);
+      }
+
+      .step-line {
+        width: 70px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--line);
+      }
+
+      .shopping-step.is-complete + .step-line {
+        background: var(--green);
       }
 
       .shopping-meals,
-      .shopping-results {
+      .shopping-results,
+      .shopping-list-scroll {
         display: grid;
         gap: 10px;
+      }
+
+      .shopping-meals,
+      .shopping-results,
+      .shopping-list-scroll {
+        min-height: 0;
+      }
+
+      .shopping-meals,
+      .shopping-list-scroll {
+        overflow: auto;
+        padding-right: 3px;
+      }
+
+      .shopping-results {
+        overflow: hidden;
       }
 
       .shopping-meal {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
-        gap: 12px;
-        align-items: start;
+        gap: 14px;
+        align-items: center;
         border: 1px solid var(--line);
-        border-radius: 18px;
+        border-radius: 22px;
         background: #fff;
-        padding: 12px 14px;
+        padding: 16px 18px;
       }
 
       .shopping-meal input {
@@ -580,9 +669,9 @@
         gap: 10px;
         align-items: center;
         border: 1px solid var(--line);
-        border-radius: 18px;
+        border-radius: 20px;
         background: #fff;
-        padding: 10px 12px;
+        padding: 12px 14px;
       }
 
       .shopping-list input {
@@ -599,6 +688,48 @@
         width: 36px;
         min-height: 36px;
         padding: 0;
+      }
+
+      .selected-meals-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: #f7efe2;
+        padding: 14px 18px;
+      }
+
+      .selected-meals-summary strong {
+        display: block;
+        color: #c6653b;
+        font-size: 13px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .selected-meals-summary span {
+        display: block;
+        margin-top: 2px;
+        font-weight: 850;
+      }
+
+      .shopping-footer {
+        display: none;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .shopping-footer.is-visible {
+        display: flex;
+      }
+
+      .shopping-footer button {
+        min-width: 150px;
       }
 
       .missing-ingredients {
@@ -732,6 +863,30 @@
         .shopping-source {
           grid-column: 1 / -1;
         }
+
+        .shopping-picker {
+          max-height: calc(100vh - 24px);
+        }
+
+        .shopping-steps {
+          gap: 8px;
+        }
+
+        .step-line {
+          width: 36px;
+        }
+
+        .selected-meals-summary {
+          grid-template-columns: 1fr;
+        }
+
+        .shopping-footer {
+          flex-direction: column;
+        }
+
+        .shopping-footer button {
+          width: 100%;
+        }
       }
     </style>
   </head>
@@ -799,24 +954,49 @@
     </div>
 
     <div class="overlay" id="shopping-overlay" aria-hidden="true">
-      <section class="picker" role="dialog" aria-modal="true" aria-labelledby="shopping-title">
+      <section class="picker shopping-picker" role="dialog" aria-modal="true" aria-labelledby="shopping-title">
         <div class="picker-head">
           <div>
             <p class="eyebrow">Shopping list</p>
             <div class="picker-title" id="shopping-title">Choose meals</div>
-            <p class="picker-subtitle">Pick meals from either week, then generate a combined ingredient list.</p>
+            <p class="picker-subtitle" id="shopping-subtitle">Pick meals from either week, then generate a combined ingredient list.</p>
           </div>
           <button class="icon-button" type="button" id="close-shopping" aria-label="Close shopping list">x</button>
         </div>
+        <div class="shopping-steps" aria-label="Shopping list progress">
+          <span class="shopping-step is-active" id="shopping-step-choose">
+            <span class="step-badge">1</span>
+            Choose meals
+          </span>
+          <span class="step-line" aria-hidden="true"></span>
+          <span class="shopping-step" id="shopping-step-generate">
+            <span class="step-badge">2</span>
+            Generate list
+          </span>
+        </div>
         <div class="shopping-layout">
-          <div class="drawer-actions">
-            <button class="primary" type="button" id="generate-shopping">Generate list</button>
-            <button type="button" id="select-all-meals">Select all planned meals</button>
-            <button type="button" id="clear-all-meals">Unselect all</button>
-            <button type="button" id="share-shopping">Share list</button>
+          <div class="shopping-stage" id="shopping-choose-stage">
+            <div class="drawer-actions">
+              <button class="primary" type="button" id="generate-shopping">Next: generate list</button>
+              <button type="button" id="select-all-meals">Select all planned meals</button>
+              <button type="button" id="clear-all-meals">Clear all</button>
+            </div>
+            <div class="shopping-meals" id="shopping-meals"></div>
           </div>
-          <div class="shopping-meals" id="shopping-meals"></div>
-          <div class="shopping-results" id="shopping-results"></div>
+          <div class="shopping-stage" id="shopping-results-stage" hidden>
+            <div class="selected-meals-summary">
+              <div>
+                <strong>Selected meals</strong>
+                <span id="selected-meals-text"></span>
+              </div>
+              <button type="button" id="change-shopping-meals">Change meals</button>
+            </div>
+            <div class="shopping-results" id="shopping-results"></div>
+          </div>
+        </div>
+        <div class="shopping-footer" id="shopping-footer">
+          <button type="button" id="add-shopping-item">Add item</button>
+          <button class="primary" type="button" id="share-shopping">Share list</button>
         </div>
       </section>
     </div>
@@ -925,6 +1105,7 @@
       let activeFilter = "recommended";
       let selectedShoppingMeals = new Set(loadShoppingSelection());
       let generatedShoppingItems = [];
+      let shoppingStep = "choose";
 
       function loadState() {
         const saved = localStorage.getItem(storageKey);
@@ -1247,8 +1428,9 @@
         if (!selectedShoppingMeals.size) {
           plannedMealSlots().forEach((slot) => selectedShoppingMeals.add(slot.id));
         }
+        shoppingStep = "choose";
         renderShoppingMeals();
-        renderShoppingResults();
+        renderShoppingView();
         document.getElementById("shopping-overlay").classList.add("is-open");
         document.getElementById("shopping-overlay").setAttribute("aria-hidden", "false");
         document.body.classList.add("is-locked");
@@ -1258,6 +1440,23 @@
         document.getElementById("shopping-overlay").classList.remove("is-open");
         document.getElementById("shopping-overlay").setAttribute("aria-hidden", "true");
         document.body.classList.remove("is-locked");
+      }
+
+      function renderShoppingView() {
+        const isResults = shoppingStep === "results";
+        document.getElementById("shopping-title").textContent = isResults ? "Your list is ready" : "Choose meals";
+        document.getElementById("shopping-subtitle").textContent = isResults
+          ? "Edit anything you need, then share the plain text list."
+          : "Pick meals from either week, then generate a combined ingredient list.";
+        document.getElementById("shopping-choose-stage").hidden = isResults;
+        document.getElementById("shopping-results-stage").hidden = !isResults;
+        document.getElementById("shopping-footer").classList.toggle("is-visible", isResults);
+        document.getElementById("shopping-step-choose").classList.toggle("is-active", !isResults);
+        document.getElementById("shopping-step-choose").classList.toggle("is-complete", isResults);
+        document.getElementById("shopping-step-generate").classList.toggle("is-active", isResults);
+        document.getElementById("shopping-step-generate").classList.toggle("is-complete", false);
+        document.querySelector("#shopping-step-choose .step-badge").textContent = isResults ? "✓" : "1";
+        renderSelectedMealsSummary();
       }
 
       function renderShoppingMeals() {
@@ -1278,14 +1477,24 @@
             else selectedShoppingMeals.delete(slot.id);
             saveShoppingSelection();
             generatedShoppingItems = [];
-            renderShoppingResults();
           });
           root.append(label);
         });
       }
 
+      function selectedMealSlots() {
+        return plannedMealSlots().filter((slot) => selectedShoppingMeals.has(slot.id));
+      }
+
+      function renderSelectedMealsSummary() {
+        const root = document.getElementById("selected-meals-text");
+        if (!root) return;
+        const meals = selectedMealSlots().map((slot) => slot.details.shortName);
+        root.textContent = meals.length ? meals.join(", ") : "No meals selected";
+      }
+
       function generateShoppingItems() {
-        const selected = plannedMealSlots().filter((slot) => selectedShoppingMeals.has(slot.id));
+        const selected = selectedMealSlots();
         const ingredientMap = new Map();
         const missing = [];
         selected.forEach((slot) => {
@@ -1308,19 +1517,20 @@
           .sort((a, b) => a.text.localeCompare(b.text));
 
         renderShoppingResults(missing);
+        shoppingStep = "results";
+        renderShoppingView();
       }
 
       function renderShoppingResults(missing = []) {
         const root = document.getElementById("shopping-results");
         root.innerHTML = `
-          <strong>${generatedShoppingItems.length ? "Shopping list" : "No ingredients yet"}</strong>
-          ${generatedShoppingItems.length ? `<ul class="shopping-list">${generatedShoppingItems.map((item) => `
-            <li data-item-id="${item.id}">
-              <input type="text" value="${escapeAttr(item.text)}" aria-label="Shopping item">
-              <span class="shopping-source">${item.meals.join(", ")}</span>
-              <button class="remove-item" type="button" aria-label="Remove ${escapeAttr(item.text)}">x</button>
-            </li>
-          `).join("")}</ul>` : `<span>Select meals and generate a list. Add ingredients to meals in the Meal bank if nothing appears.</span>`}
+          ${generatedShoppingItems.length ? `<div class="shopping-list-scroll"><ul class="shopping-list">${generatedShoppingItems.map((item) => `
+              <li data-item-id="${item.id}">
+                <input type="text" value="${escapeAttr(item.text)}" aria-label="Shopping item">
+                <span class="shopping-source">${item.meals.join(", ")}</span>
+                <button class="remove-item" type="button" aria-label="Remove ${escapeAttr(item.text)}">x</button>
+              </li>
+            `).join("")}</ul></div>` : `<span>Select meals and generate a list. Add ingredients to meals in the Meal bank if nothing appears.</span>`}
           ${missing.length ? `<div class="missing-ingredients"><strong>Meals missing ingredients</strong><br>${missing.join("<br>")}</div>` : ""}
         `;
 
@@ -1334,6 +1544,23 @@
             renderShoppingResults();
           });
         });
+      }
+
+      function addShoppingItem() {
+        if (shoppingStep !== "results") {
+          generateShoppingItems();
+        }
+        generatedShoppingItems.push({
+          id: `manual-${Date.now()}`,
+          text: "",
+          meals: ["Added manually"]
+        });
+        renderShoppingResults();
+        shoppingStep = "results";
+        renderShoppingView();
+        const rows = document.querySelectorAll("#shopping-results [data-item-id]");
+        const lastInput = rows[rows.length - 1]?.querySelector("input");
+        if (lastInput) lastInput.focus();
       }
 
       function escapeAttr(value) {
@@ -1387,15 +1614,20 @@
         saveShoppingSelection();
         generatedShoppingItems = [];
         renderShoppingMeals();
-        renderShoppingResults();
+        renderShoppingView();
       });
       document.getElementById("clear-all-meals").addEventListener("click", () => {
         selectedShoppingMeals.clear();
         generatedShoppingItems = [];
         saveShoppingSelection();
         renderShoppingMeals();
-        renderShoppingResults();
+        renderShoppingView();
       });
+      document.getElementById("change-shopping-meals").addEventListener("click", () => {
+        shoppingStep = "choose";
+        renderShoppingView();
+      });
+      document.getElementById("add-shopping-item").addEventListener("click", addShoppingItem);
       document.getElementById("share-shopping").addEventListener("click", shareShoppingList);
 
       document.getElementById("picker-overlay").addEventListener("click", (event) => {
