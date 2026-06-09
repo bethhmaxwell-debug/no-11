@@ -521,6 +521,154 @@
       font-weight: 750;
     }
 
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 850;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(36, 49, 58, .32);
+    }
+
+    button.primary {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fff;
+    }
+
+    button.danger {
+      color: #9c3d35;
+    }
+
+    .save-note {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: center;
+      background: rgba(36, 49, 58, .26);
+      padding: 18px;
+    }
+
+    .overlay.is-open {
+      display: grid;
+    }
+
+    .edit-panel {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      gap: 18px;
+      width: min(760px, 100%);
+      max-height: min(780px, calc(100vh - 36px));
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      box-shadow: 0 30px 80px rgba(36, 49, 58, .22);
+      padding: 22px;
+    }
+
+    .edit-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .edit-head h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.08;
+    }
+
+    .edit-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .edit-body {
+      display: grid;
+      gap: 14px;
+      min-height: 0;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .form-row label {
+      color: #526169;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .form-row select,
+    .form-row textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      padding: 10px 12px;
+    }
+
+    .form-row select {
+      min-height: 42px;
+      border-radius: 999px;
+    }
+
+    .form-row textarea {
+      min-height: 86px;
+      border-radius: 12px;
+      resize: vertical;
+    }
+
+    .form-help {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .edit-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .icon-button {
+      width: 42px;
+      padding: 0;
+    }
+
     @media (max-width: 900px) {
       .nav-inner {
         align-items: flex-start;
@@ -570,6 +718,12 @@
 
       h1 {
         font-size: 32px;
+      }
+
+      .edit-panel {
+        align-self: end;
+        max-height: calc(100vh - 24px);
+        padding: 20px;
       }
     }
 
@@ -723,6 +877,11 @@
       <div>
         <h1>Our Balanced Working Week</h1>
         <p class="subtitle">A shared rhythm for work, Jude, movement, meals, chores, recovery, and time together. Wednesday run club is fortnightly so Rich's Jude day has a gentler landing.</p>
+        <div class="header-actions">
+          <button class="primary" type="button" id="edit-week">Edit week</button>
+          <button class="danger" type="button" id="reset-week">Reset saved edits</button>
+          <span class="save-note" id="save-note">Using the published plan</span>
+        </div>
       </div>
       <section class="legend" aria-label="Colour key">
         <div class="legend-item"><span class="swatch" style="background: var(--you)"></span>Beth leads</div>
@@ -1087,23 +1246,299 @@
       </article>
     </section>
   </main>
+
+  <div class="overlay" id="edit-overlay" aria-hidden="true">
+    <section class="edit-panel" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+      <div class="edit-head">
+        <div>
+          <h2 id="edit-title">Edit working week</h2>
+          <p>Changes save in this browser, so you can try a rhythm before updating the published site.</p>
+        </div>
+        <button class="icon-button" type="button" id="close-edit" aria-label="Close editor">x</button>
+      </div>
+
+      <div class="form-row">
+        <label for="edit-day">Day</label>
+        <select id="edit-day"></select>
+      </div>
+
+      <div class="edit-body">
+        <div class="form-row">
+          <label for="edit-work">Work + Location</label>
+          <textarea id="edit-work"></textarea>
+          <span class="form-help">One line per item. Use “Beth | WFH, full work day” or “Rich | Jude day”.</span>
+        </div>
+        <div class="form-row">
+          <label for="edit-nursery">Nursery</label>
+          <textarea id="edit-nursery"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="edit-dinner">Dinner</label>
+          <textarea id="edit-dinner"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="edit-evening">Evening</label>
+          <textarea id="edit-evening"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="edit-chores">Chores</label>
+          <textarea id="edit-chores"></textarea>
+        </div>
+      </div>
+
+      <div class="edit-actions">
+        <button type="button" id="cancel-edit">Cancel</button>
+        <button class="primary" type="button" id="save-edit">Save day</button>
+      </div>
+    </section>
+  </div>
+
   <script>
-    const dayTabs = document.querySelectorAll('[data-day-tab]');
-    const dayPanels = document.querySelectorAll('[data-day-panel]');
+    const storageKey = "balanced-working-week-edits-v1";
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const dayKeys = days.map((day) => day.toLowerCase());
+    const categories = ["Work + Location", "Nursery", "Dinner", "Evening", "Chores"];
+    const fields = {
+      "Work + Location": "edit-work",
+      Nursery: "edit-nursery",
+      Dinner: "edit-dinner",
+      Evening: "edit-evening",
+      Chores: "edit-chores"
+    };
+
+    const dayTabs = document.querySelectorAll("[data-day-tab]");
+    const dayPanels = document.querySelectorAll("[data-day-panel]");
+    const daySelect = document.getElementById("edit-day");
+    let activeEditDay = "Monday";
+    let defaultPlan = extractPlanFromPage();
+    let plan = loadPlan();
+
+    function dayKey(day) {
+      return day.toLowerCase();
+    }
+
+    function classForLine(line) {
+      const label = line.label.toLowerCase();
+      const text = line.text.toLowerCase();
+      if (label.includes("beth")) return "beth";
+      if (label.includes("rich")) return "rich-person";
+      if (label.includes("both") && (text.includes("social") || text.includes("family"))) return "social";
+      if (label.includes("both") || label.includes("shared")) return "shared";
+      return "shared";
+    }
+
+    function lineHtml(line) {
+      return `<div class="status-line ${classForLine(line)}"><span class="label">${escapeHtml(line.label)}</span><span>${escapeHtml(line.text)}</span></div>`;
+    }
+
+    function linesToTextarea(lines) {
+      return lines.map((line) => `${line.label} | ${line.text}`).join("\n");
+    }
+
+    function textareaToLines(value) {
+      return value
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [label, ...rest] = line.split("|");
+          if (!rest.length) return { label: "Both", text: label.trim() };
+          return { label: label.trim() || "Both", text: rest.join("|").trim() };
+        })
+        .filter((line) => line.text);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function extractLines(root) {
+      return [...root.querySelectorAll(".status-line")].map((line) => ({
+        label: line.querySelector(".label")?.textContent.trim() || "Both",
+        text: [...line.children].at(-1)?.textContent.trim() || ""
+      })).filter((line) => line.text);
+    }
+
+    function emptyDay() {
+      return categories.reduce((day, category) => {
+        day[category] = [];
+        return day;
+      }, {});
+    }
+
+    function clonePlan(source) {
+      return JSON.parse(JSON.stringify(source));
+    }
+
+    function extractPlanFromPage() {
+      const gridCells = [...document.querySelectorAll(".schedule .grid > .cell")];
+      const planFromPage = {};
+      days.forEach((day) => {
+        planFromPage[day] = emptyDay();
+      });
+
+      categories.forEach((category, rowIndex) => {
+        const rowStart = 8 + rowIndex * 8;
+        days.forEach((day, index) => {
+          const cell = gridCells[rowStart + index + 1];
+          const source = category === "Work + Location"
+            ? cell?.querySelector('.work-option[data-option="c"] .compact-map')
+            : cell?.querySelector(".compact-map");
+          planFromPage[day][category] = source ? extractLines(source) : [];
+        });
+      });
+
+      return planFromPage;
+    }
+
+    function loadPlan() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+        return saved?.plan || clonePlan(defaultPlan);
+      } catch {
+        return clonePlan(defaultPlan);
+      }
+    }
+
+    function savePlan() {
+      const savedAt = new Date().toISOString();
+      localStorage.setItem(storageKey, JSON.stringify({ plan, savedAt }));
+      updateSaveNote(savedAt);
+    }
+
+    function updateSaveNote(savedAt = null) {
+      const saved = savedAt || JSON.parse(localStorage.getItem(storageKey) || "null")?.savedAt;
+      const note = document.getElementById("save-note");
+      if (!saved) {
+        note.textContent = "Using the published plan";
+        return;
+      }
+      note.textContent = `Saved on this device ${new Date(saved).toLocaleString([], {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+      })}`;
+    }
+
+    function renderDesktop() {
+      const gridCells = [...document.querySelectorAll(".schedule .grid > .cell")];
+      categories.forEach((category, rowIndex) => {
+        const rowStart = 8 + rowIndex * 8;
+        days.forEach((day, index) => {
+          const cell = gridCells[rowStart + index + 1];
+          if (!cell) return;
+          const html = `<div class="compact-map">${plan[day][category].map(lineHtml).join("")}</div>`;
+          if (category === "Work + Location") {
+            const compact = cell.querySelector('.work-option[data-option="c"]');
+            if (compact) compact.innerHTML = html;
+          } else {
+            cell.innerHTML = html;
+          }
+        });
+      });
+    }
+
+    function renderMobile() {
+      dayKeys.forEach((key, index) => {
+        const day = days[index];
+        const panel = document.querySelector(`[data-day-panel="${key}"]`);
+        if (!panel) return;
+        panel.innerHTML = `
+          <h2 class="mobile-day-title">${day}</h2>
+          ${mobileSectionHtml("Work + Location", plan[day]["Work + Location"])}
+          ${mobileSectionHtml("Nursery", plan[day].Nursery)}
+          ${mobileSectionHtml("Dinner + Evening", [...plan[day].Dinner, ...plan[day].Evening])}
+          ${mobileSectionHtml("Chores", plan[day].Chores)}
+        `;
+      });
+    }
+
+    function mobileSectionHtml(title, lines) {
+      return `
+        <section class="day-section">
+          <h3>${title}</h3>
+          <div class="compact-map">${lines.map(lineHtml).join("")}</div>
+        </section>
+      `;
+    }
+
+    function renderPlan() {
+      renderDesktop();
+      renderMobile();
+      updateSaveNote();
+    }
+
+    function populateDaySelect() {
+      daySelect.innerHTML = days.map((day) => `<option value="${day}">${day}</option>`).join("");
+    }
+
+    function openEditor(day = activeEditDay) {
+      activeEditDay = day;
+      daySelect.value = day;
+      fillEditForm(day);
+      document.getElementById("edit-overlay").classList.add("is-open");
+      document.getElementById("edit-overlay").setAttribute("aria-hidden", "false");
+    }
+
+    function closeEditor() {
+      document.getElementById("edit-overlay").classList.remove("is-open");
+      document.getElementById("edit-overlay").setAttribute("aria-hidden", "true");
+    }
+
+    function fillEditForm(day) {
+      categories.forEach((category) => {
+        document.getElementById(fields[category]).value = linesToTextarea(plan[day][category]);
+      });
+    }
+
+    function saveEditedDay() {
+      categories.forEach((category) => {
+        plan[activeEditDay][category] = textareaToLines(document.getElementById(fields[category]).value);
+      });
+      savePlan();
+      renderPlan();
+      closeEditor();
+    }
 
     dayTabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
+      tab.addEventListener("click", () => {
         const selectedDay = tab.dataset.dayTab;
 
         dayTabs.forEach((item) => {
-          item.setAttribute('aria-selected', String(item === tab));
+          item.setAttribute("aria-selected", String(item === tab));
         });
 
         dayPanels.forEach((panel) => {
-          panel.classList.toggle('is-active', panel.dataset.dayPanel === selectedDay);
+          panel.classList.toggle("is-active", panel.dataset.dayPanel === selectedDay);
         });
       });
     });
+
+    document.getElementById("edit-week").addEventListener("click", () => openEditor());
+    document.getElementById("close-edit").addEventListener("click", closeEditor);
+    document.getElementById("cancel-edit").addEventListener("click", closeEditor);
+    document.getElementById("save-edit").addEventListener("click", saveEditedDay);
+    document.getElementById("edit-overlay").addEventListener("click", (event) => {
+      if (event.target.id === "edit-overlay") closeEditor();
+    });
+    daySelect.addEventListener("change", () => {
+      activeEditDay = daySelect.value;
+      fillEditForm(activeEditDay);
+    });
+    document.getElementById("reset-week").addEventListener("click", () => {
+      if (!confirm("Reset saved edits on this device and return to the published plan?")) return;
+      localStorage.removeItem(storageKey);
+      plan = clonePlan(defaultPlan);
+      renderPlan();
+    });
+
+    populateDaySelect();
+    renderPlan();
   </script>
 </body>
 </html>
