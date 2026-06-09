@@ -153,13 +153,25 @@
 
       button,
       input,
-      select {
+      select,
+      textarea {
         min-height: 42px;
         border: 1px solid var(--line);
-        border-radius: 999px;
         background: #fff;
         color: var(--ink);
         font: inherit;
+      }
+
+      button,
+      input,
+      select {
+        border-radius: 999px;
+      }
+
+      textarea {
+        min-height: 92px;
+        border-radius: 18px;
+        resize: vertical;
       }
 
       button {
@@ -184,7 +196,8 @@
       }
 
       input,
-      select {
+      select,
+      textarea {
         width: 100%;
         padding: 8px 14px;
       }
@@ -386,6 +399,16 @@
         color: var(--muted);
       }
 
+      .picker-filters {
+        margin-bottom: 18px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .filter-button {
+        flex: 0 0 auto;
+      }
+
       .filter-button[aria-pressed="true"] {
         border-color: var(--green);
         background: var(--green);
@@ -424,6 +447,26 @@
         font-size: 42px;
       }
 
+      .recipe-link {
+        color: var(--green-dark);
+        font-size: 13px;
+        font-weight: 900;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 3px;
+      }
+
+      .meal-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .meal-card-actions button {
+        min-height: 34px;
+        padding-inline: 12px;
+        font-size: 13px;
+      }
+
       .drawer {
         position: fixed;
         inset: 0 0 0 auto;
@@ -448,19 +491,102 @@
         margin-bottom: 18px;
       }
 
+      .field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .field span {
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .form-help {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
       .meal-form-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 120px;
         gap: 10px;
       }
 
-      .meal-form button {
-        width: 100%;
+      .meal-form-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .meal-form-actions button {
+        flex: 1 1 0;
       }
 
       .empty-note {
         color: var(--muted);
         font-size: 14px;
+      }
+
+      .shopping-layout {
+        display: grid;
+        gap: 18px;
+      }
+
+      .shopping-meals,
+      .shopping-results {
+        display: grid;
+        gap: 10px;
+      }
+
+      .shopping-meal {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #fff;
+        padding: 12px 14px;
+      }
+
+      .shopping-meal input {
+        width: auto;
+        margin-top: 4px;
+        accent-color: var(--green);
+      }
+
+      .shopping-meal strong,
+      .shopping-results strong {
+        display: block;
+      }
+
+      .shopping-meal span,
+      .shopping-results span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .shopping-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .shopping-list li {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        padding: 9px 13px;
+      }
+
+      .missing-ingredients {
+        border: 1px dashed #d8b989;
+        border-radius: 18px;
+        background: rgba(255, 241, 200, .58);
+        color: var(--muted);
+        padding: 12px 14px;
       }
 
       @media (max-width: 980px) {
@@ -574,6 +700,10 @@
         .meal-form-row {
           grid-template-columns: 1fr;
         }
+
+        .meal-form-actions {
+          flex-direction: column;
+        }
       }
     </style>
   </head>
@@ -599,6 +729,7 @@
         </div>
         <div class="actions">
           <button class="primary" type="button" id="suggest-plan">Suggest week</button>
+          <button type="button" id="open-shopping">Shopping list</button>
           <button type="button" id="open-bank">Meal bank</button>
         </div>
       </header>
@@ -639,25 +770,69 @@
       </section>
     </div>
 
+    <div class="overlay" id="shopping-overlay" aria-hidden="true">
+      <section class="picker" role="dialog" aria-modal="true" aria-labelledby="shopping-title">
+        <div class="picker-head">
+          <div>
+            <p class="eyebrow">Shopping list</p>
+            <div class="picker-title" id="shopping-title">Choose meals</div>
+            <p class="picker-subtitle">Pick meals from either week, then generate a combined ingredient list.</p>
+          </div>
+          <button class="icon-button" type="button" id="close-shopping" aria-label="Close shopping list">x</button>
+        </div>
+        <div class="shopping-layout">
+          <div class="drawer-actions">
+            <button class="primary" type="button" id="generate-shopping">Generate list</button>
+            <button type="button" id="select-all-meals">Select all planned meals</button>
+          </div>
+          <div class="shopping-meals" id="shopping-meals"></div>
+          <div class="shopping-results" id="shopping-results"></div>
+        </div>
+      </section>
+    </div>
+
     <aside class="drawer" id="meal-drawer" aria-hidden="true" aria-labelledby="meal-bank-title">
       <div class="drawer-head">
         <div>
           <p class="eyebrow">Meal bank</p>
           <h2 id="meal-bank-title">Regular dinners</h2>
-          <p class="board-note">Add the ones we forgot and they will appear in future pickers.</p>
+          <p class="board-note">Add recipes, links and ingredients once, then reuse them in future weeks.</p>
         </div>
         <button class="icon-button" type="button" id="close-bank" aria-label="Close meal bank">x</button>
       </div>
 
       <form class="meal-form" id="meal-form">
-        <input id="meal-name" type="text" placeholder="Add a regular dinner">
+        <input type="hidden" id="editing-meal-index" value="">
+        <label class="field">
+          <span>Dinner name</span>
+          <input id="meal-name" type="text" placeholder="Add a regular dinner">
+        </label>
         <div class="meal-form-row">
-          <select id="meal-effort" aria-label="Meal effort">
-            <option value="low">low effort</option>
-            <option value="medium">medium</option>
-            <option value="cook">cook night</option>
-          </select>
-          <button class="primary" type="submit">Add meal</button>
+          <label class="field">
+            <span>Effort</span>
+            <select id="meal-effort" aria-label="Meal effort">
+              <option value="low">low effort</option>
+              <option value="medium">medium</option>
+              <option value="cook">cook night</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Icon</span>
+            <input id="meal-icon" type="text" maxlength="4" placeholder="🍝">
+          </label>
+        </div>
+        <label class="field">
+          <span>Recipe link</span>
+          <input id="meal-url" type="url" placeholder="https://...">
+        </label>
+        <label class="field">
+          <span>Ingredients</span>
+          <textarea id="meal-ingredients" placeholder="One ingredient per line"></textarea>
+          <span class="form-help">These are remembered in this browser and used for the shopping list.</span>
+        </label>
+        <div class="meal-form-actions">
+          <button class="primary" type="submit" id="save-meal">Add meal</button>
+          <button type="button" id="cancel-edit">Clear</button>
         </div>
       </form>
       <div class="drawer-actions">
@@ -669,25 +844,25 @@
 
     <script>
       const mealDefaults = [
-        { name: "Mango chicken hoisin lettuce wraps", shortName: "Hoisin lettuce wraps", effort: "cook", tags: ["fresh", "family"], icon: "🥬" },
-        { name: "Veggie lentil lasagna", shortName: "Lentil lasagna", effort: "medium", tags: ["batch", "leftovers"], icon: "🍅" },
-        { name: "Spaghetti bolognese or meatballs", shortName: "Spaghetti night", effort: "medium", tags: ["staple", "pasta"], icon: "🍝" },
-        { name: "Chipolata sausages with mash and peas", shortName: "Sausages and mash", effort: "low", tags: ["comfort", "quick"], icon: "🥔" },
-        { name: "Jacket potato, beans and cheese", shortName: "Jacket potatoes", effort: "low", tags: ["very easy"], icon: "🥔" },
-        { name: "Chicken teriyaki poke bowls", shortName: "Teriyaki poke bowls", effort: "cook", tags: ["fresh", "rice"], icon: "🍚" },
-        { name: "Chili with rice or burrito wraps", shortName: "Chili bowls", effort: "medium", tags: ["batch", "leftovers"], icon: "🌶️" },
-        { name: "Salmon or fish with green beans and new potatoes", shortName: "Fish dinner", effort: "cook", tags: ["fresh", "fish"], icon: "🐟" },
-        { name: "Feta, chicken and tomato tray bake", shortName: "Chicken tray bake", effort: "cook", tags: ["tray bake"], icon: "🍅" },
-        { name: "Chicken, peanut and lime", shortName: "Peanut lime chicken", effort: "cook", tags: ["family", "fresh"], icon: "🥜" },
-        { name: "Lazy pizzas and salad", shortName: "Lazy pizzas", effort: "low", tags: ["Friday", "easy"], icon: "🍕" }
+        { name: "Mango chicken hoisin lettuce wraps", shortName: "Hoisin lettuce wraps", effort: "cook", tags: ["fresh", "family"], icon: "🥬", recipeUrl: "", ingredients: ["chicken breast", "mango", "lettuce cups", "hoisin sauce", "spring onions", "cucumber"] },
+        { name: "Veggie lentil lasagna", shortName: "Lentil lasagna", effort: "medium", tags: ["batch", "leftovers"], icon: "🍅", recipeUrl: "", ingredients: ["red lentils", "lasagna sheets", "tinned tomatoes", "cheese", "onion", "carrots"] },
+        { name: "Spaghetti bolognese or meatballs", shortName: "Spaghetti night", effort: "medium", tags: ["staple", "pasta"], icon: "🍝", recipeUrl: "", ingredients: ["spaghetti", "mince or meatballs", "tinned tomatoes", "onion", "garlic", "parmesan"] },
+        { name: "Chipolata sausages with mash and peas", shortName: "Sausages and mash", effort: "low", tags: ["comfort", "quick"], icon: "🥔", recipeUrl: "", ingredients: ["chipolata sausages", "potatoes", "peas", "butter", "gravy"] },
+        { name: "Jacket potato, beans and cheese", shortName: "Jacket potatoes", effort: "low", tags: ["very easy"], icon: "🥔", recipeUrl: "", ingredients: ["baking potatoes", "baked beans", "cheddar", "salad"] },
+        { name: "Chicken teriyaki poke bowls", shortName: "Teriyaki poke bowls", effort: "cook", tags: ["fresh", "rice"], icon: "🍚", recipeUrl: "", ingredients: ["chicken", "rice", "teriyaki sauce", "edamame", "cucumber", "avocado"] },
+        { name: "Chili with rice or burrito wraps", shortName: "Chili bowls", effort: "medium", tags: ["batch", "leftovers"], icon: "🌶️", recipeUrl: "", ingredients: ["mince or veggie mince", "kidney beans", "tinned tomatoes", "rice or wraps", "cheese", "soured cream"] },
+        { name: "Salmon or fish with green beans and new potatoes", shortName: "Fish dinner", effort: "cook", tags: ["fresh", "fish"], icon: "🐟", recipeUrl: "", ingredients: ["salmon or fish fillets", "green beans", "new potatoes", "lemon", "butter"] },
+        { name: "Feta, chicken and tomato tray bake", shortName: "Chicken tray bake", effort: "cook", tags: ["tray bake"], icon: "🍅", recipeUrl: "", ingredients: ["chicken thighs", "feta", "cherry tomatoes", "red onion", "new potatoes"] },
+        { name: "Chicken, peanut and lime", shortName: "Peanut lime chicken", effort: "cook", tags: ["family", "fresh"], icon: "🥜", recipeUrl: "", ingredients: ["chicken breast", "peanut butter", "lime", "soy sauce", "rice", "broccoli"] },
+        { name: "Lazy pizzas and salad", shortName: "Lazy pizzas", effort: "low", tags: ["Friday", "easy"], icon: "🍕", recipeUrl: "", ingredients: ["pizzas", "salad leaves", "cucumber", "tomatoes"] }
       ];
 
       const newRecipeIdeas = [
-        { name: "New recipe: crispy gnocchi tray bake", shortName: "Crispy gnocchi tray bake", effort: "cook", tags: ["new recipe"], icon: "🍅" },
-        { name: "New recipe: mild coconut chicken curry", shortName: "Coconut chicken curry", effort: "cook", tags: ["new recipe"], icon: "🥥" },
-        { name: "New recipe: halloumi fajita bowls", shortName: "Halloumi fajita bowls", effort: "cook", tags: ["new recipe"], icon: "🫑" },
-        { name: "New recipe: turkey meatball pitas", shortName: "Turkey meatball pitas", effort: "cook", tags: ["new recipe"], icon: "🥙" },
-        { name: "New recipe: salmon taco bowls", shortName: "Salmon taco bowls", effort: "cook", tags: ["new recipe"], icon: "🐟" }
+        { name: "New recipe: crispy gnocchi tray bake", shortName: "Crispy gnocchi tray bake", effort: "cook", tags: ["new recipe"], icon: "🍅", recipeUrl: "", ingredients: [] },
+        { name: "New recipe: mild coconut chicken curry", shortName: "Coconut chicken curry", effort: "cook", tags: ["new recipe"], icon: "🥥", recipeUrl: "", ingredients: [] },
+        { name: "New recipe: halloumi fajita bowls", shortName: "Halloumi fajita bowls", effort: "cook", tags: ["new recipe"], icon: "🫑", recipeUrl: "", ingredients: [] },
+        { name: "New recipe: turkey meatball pitas", shortName: "Turkey meatball pitas", effort: "cook", tags: ["new recipe"], icon: "🥙", recipeUrl: "", ingredients: [] },
+        { name: "New recipe: salmon taco bowls", shortName: "Salmon taco bowls", effort: "cook", tags: ["new recipe"], icon: "🐟", recipeUrl: "", ingredients: [] }
       ];
 
       const daySlots = [
@@ -708,41 +883,61 @@
       ];
 
       const flexibleMeals = [
-        { name: "Flexible / eating with others", shortName: "Flexible", effort: "low", tags: ["weekend"], icon: "🍽️" },
-        { name: "Flexible / batch cook if useful", shortName: "Batch cook if useful", effort: "medium", tags: ["weekend"], icon: "🥘" }
+        { name: "Flexible / eating with others", shortName: "Flexible", effort: "low", tags: ["weekend"], icon: "🍽️", recipeUrl: "", ingredients: [] },
+        { name: "Flexible / batch cook if useful", shortName: "Batch cook if useful", effort: "medium", tags: ["weekend"], icon: "🥘", recipeUrl: "", ingredients: [] }
       ];
 
-      const storageKey = "family-dinner-rota-v2";
+      const storageKey = "family-dinner-rota-v3";
+      const legacyStorageKey = "family-dinner-rota-v2";
       const state = loadState();
       let activeWeek = "Week 1";
       let activeSlot = null;
       let activeFilter = "recommended";
+      let selectedShoppingMeals = new Set(loadShoppingSelection());
 
       function loadState() {
         const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          parsed.meals = parsed.meals.map(normalizeMeal);
-          return parsed;
+        const legacy = localStorage.getItem(legacyStorageKey);
+        if (saved || legacy) {
+          const parsed = JSON.parse(saved || legacy);
+          return {
+            meals: (parsed.meals || mealDefaults).map(normalizeMeal),
+            plan: parsed.plan || daySlots.map(([week, day, type, meal]) => ({ week, day, type, meal }))
+          };
         }
         return {
-          meals: mealDefaults,
+          meals: mealDefaults.map(normalizeMeal),
           plan: daySlots.map(([week, day, type, meal]) => ({ week, day, type, meal }))
         };
       }
 
       function normalizeMeal(meal) {
+        const defaultMatch = mealDefaults.find((item) => item.name === meal.name);
         return {
           name: meal.name,
           shortName: meal.shortName || shortenMeal(meal.name),
           effort: meal.effort || "medium",
           tags: meal.tags || ["added"],
-          icon: meal.icon || iconFor(meal.name)
+          icon: meal.icon || iconFor(meal.name),
+          recipeUrl: meal.recipeUrl || "",
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : (defaultMatch?.ingredients || [])
         };
       }
 
       function saveState() {
         localStorage.setItem(storageKey, JSON.stringify(state));
+      }
+
+      function loadShoppingSelection() {
+        try {
+          return JSON.parse(localStorage.getItem(`${storageKey}-shopping-selection`) || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function saveShoppingSelection() {
+        localStorage.setItem(`${storageKey}-shopping-selection`, JSON.stringify([...selectedShoppingMeals]));
       }
 
       function allMeals() {
@@ -755,7 +950,9 @@
           shortName: shortenMeal(name),
           effort: "medium",
           tags: ["added"],
-          icon: iconFor(name)
+          icon: iconFor(name),
+          recipeUrl: "",
+          ingredients: []
         };
       }
 
@@ -826,6 +1023,7 @@
               </div>
               <div class="meal-title">${meal.shortName}</div>
               <p class="meal-note">${noteFor(slot)}</p>
+              ${meal.recipeUrl ? `<span class="recipe-link">Recipe saved</span>` : ""}
             </div>
             <div class="meal-visual" aria-hidden="true">${meal.icon}</div>
           `;
@@ -910,6 +1108,7 @@
                 <span class="tag">${meal.effort}</span>
                 ${meal.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
               </div>
+              ${meal.recipeUrl ? `<span class="recipe-link">Recipe saved</span>` : ""}
             </div>
             <span class="meal-visual" aria-hidden="true">${meal.icon}</span>
           `;
@@ -943,7 +1142,7 @@
       function renderMeals() {
         const root = document.getElementById("meal-list");
         root.innerHTML = "";
-        state.meals.map(normalizeMeal).forEach((meal) => {
+        state.meals.map(normalizeMeal).forEach((meal, index) => {
           const card = document.createElement("article");
           card.className = "meal-bank-card";
           card.innerHTML = `
@@ -952,12 +1151,47 @@
               <div class="meal-tags">
                 <span class="tag">${meal.effort}</span>
                 ${meal.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+                ${meal.ingredients.length ? `<span class="tag">${meal.ingredients.length} ingredients</span>` : ""}
+              </div>
+              ${meal.recipeUrl ? `<a class="recipe-link" href="${meal.recipeUrl}" target="_blank" rel="noopener">Open recipe</a>` : ""}
+              <div class="meal-card-actions">
+                <button type="button" data-edit-index="${index}">Edit</button>
               </div>
             </div>
             <span class="meal-visual" aria-hidden="true">${meal.icon}</span>
           `;
+          card.querySelector("[data-edit-index]").addEventListener("click", () => editMeal(index));
           root.append(card);
         });
+      }
+
+      function resetMealForm() {
+        document.getElementById("editing-meal-index").value = "";
+        document.getElementById("meal-name").value = "";
+        document.getElementById("meal-effort").value = "low";
+        document.getElementById("meal-icon").value = "";
+        document.getElementById("meal-url").value = "";
+        document.getElementById("meal-ingredients").value = "";
+        document.getElementById("save-meal").textContent = "Add meal";
+      }
+
+      function editMeal(index) {
+        const meal = normalizeMeal(state.meals[index]);
+        document.getElementById("editing-meal-index").value = String(index);
+        document.getElementById("meal-name").value = meal.name;
+        document.getElementById("meal-effort").value = meal.effort;
+        document.getElementById("meal-icon").value = meal.icon;
+        document.getElementById("meal-url").value = meal.recipeUrl;
+        document.getElementById("meal-ingredients").value = meal.ingredients.join("\n");
+        document.getElementById("save-meal").textContent = "Save meal";
+        document.getElementById("meal-name").focus();
+      }
+
+      function ingredientsFromTextarea(value) {
+        return value
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean);
       }
 
       function openBank() {
@@ -970,6 +1204,71 @@
         document.getElementById("meal-drawer").setAttribute("aria-hidden", "true");
       }
 
+      function plannedMealSlots() {
+        return state.plan.filter((slot) => slot.type !== "flexible").map((slot) => ({
+          ...slot,
+          id: `${slot.week}-${slot.day}`,
+          details: findMeal(slot.meal)
+        }));
+      }
+
+      function openShopping() {
+        if (!selectedShoppingMeals.size) {
+          plannedMealSlots().forEach((slot) => selectedShoppingMeals.add(slot.id));
+        }
+        renderShoppingMeals();
+        renderShoppingResults();
+        document.getElementById("shopping-overlay").classList.add("is-open");
+        document.getElementById("shopping-overlay").setAttribute("aria-hidden", "false");
+        document.body.classList.add("is-locked");
+      }
+
+      function closeShopping() {
+        document.getElementById("shopping-overlay").classList.remove("is-open");
+        document.getElementById("shopping-overlay").setAttribute("aria-hidden", "true");
+        document.body.classList.remove("is-locked");
+      }
+
+      function renderShoppingMeals() {
+        const root = document.getElementById("shopping-meals");
+        root.innerHTML = "";
+        plannedMealSlots().forEach((slot) => {
+          const label = document.createElement("label");
+          label.className = "shopping-meal";
+          label.innerHTML = `
+            <input type="checkbox" ${selectedShoppingMeals.has(slot.id) ? "checked" : ""}>
+            <span>
+              <strong>${slot.week} ${slot.day}: ${slot.details.shortName}</strong>
+              <span>${slot.details.ingredients.length ? `${slot.details.ingredients.length} ingredients saved` : "No ingredients saved yet"}</span>
+            </span>
+          `;
+          label.querySelector("input").addEventListener("change", (event) => {
+            if (event.target.checked) selectedShoppingMeals.add(slot.id);
+            else selectedShoppingMeals.delete(slot.id);
+            saveShoppingSelection();
+          });
+          root.append(label);
+        });
+      }
+
+      function renderShoppingResults() {
+        const root = document.getElementById("shopping-results");
+        const selected = plannedMealSlots().filter((slot) => selectedShoppingMeals.has(slot.id));
+        const ingredients = [];
+        const missing = [];
+        selected.forEach((slot) => {
+          if (slot.details.ingredients.length) ingredients.push(...slot.details.ingredients);
+          else missing.push(`${slot.week} ${slot.day}: ${slot.details.shortName}`);
+        });
+
+        const uniqueIngredients = [...new Set(ingredients.map((item) => item.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        root.innerHTML = `
+          <strong>${uniqueIngredients.length ? "Shopping list" : "No ingredients yet"}</strong>
+          ${uniqueIngredients.length ? `<ul class="shopping-list">${uniqueIngredients.map((item) => `<li>${item}</li>`).join("")}</ul>` : `<span>Add ingredients to meals in the Meal bank, then generate again.</span>`}
+          ${missing.length ? `<div class="missing-ingredients"><strong>Meals missing ingredients</strong><br>${missing.join("<br>")}</div>` : ""}
+        `;
+      }
+
       document.querySelectorAll(".week-tab").forEach((button) => {
         button.addEventListener("click", () => {
           activeWeek = button.dataset.week;
@@ -979,42 +1278,83 @@
 
       document.getElementById("suggest-plan").addEventListener("click", suggestWeek);
       document.getElementById("open-bank").addEventListener("click", openBank);
+      document.getElementById("open-shopping").addEventListener("click", openShopping);
       document.getElementById("close-bank").addEventListener("click", closeBank);
       document.getElementById("close-picker").addEventListener("click", closePicker);
+      document.getElementById("close-shopping").addEventListener("click", closeShopping);
+      document.getElementById("generate-shopping").addEventListener("click", () => {
+        saveShoppingSelection();
+        renderShoppingResults();
+      });
+      document.getElementById("select-all-meals").addEventListener("click", () => {
+        plannedMealSlots().forEach((slot) => selectedShoppingMeals.add(slot.id));
+        saveShoppingSelection();
+        renderShoppingMeals();
+        renderShoppingResults();
+      });
+
       document.getElementById("picker-overlay").addEventListener("click", (event) => {
         if (event.target.id === "picker-overlay") closePicker();
+      });
+
+      document.getElementById("shopping-overlay").addEventListener("click", (event) => {
+        if (event.target.id === "shopping-overlay") closeShopping();
       });
 
       document.getElementById("meal-form").addEventListener("submit", (event) => {
         event.preventDefault();
         const name = document.getElementById("meal-name").value.trim();
         const effort = document.getElementById("meal-effort").value;
+        const icon = document.getElementById("meal-icon").value.trim() || iconFor(name);
+        const recipeUrl = document.getElementById("meal-url").value.trim();
+        const ingredients = ingredientsFromTextarea(document.getElementById("meal-ingredients").value);
+        const editingIndex = document.getElementById("editing-meal-index").value;
         if (!name) return;
-        state.meals.push({
+
+        const meal = {
           name,
           shortName: shortenMeal(name),
           effort,
-          tags: ["added"],
-          icon: iconFor(name)
-        });
-        document.getElementById("meal-name").value = "";
+          tags: editingIndex === "" ? ["added"] : state.meals[Number(editingIndex)].tags,
+          icon,
+          recipeUrl,
+          ingredients
+        };
+
+        if (editingIndex === "") {
+          state.meals.push(meal);
+        } else {
+          const oldName = state.meals[Number(editingIndex)].name;
+          state.meals[Number(editingIndex)] = meal;
+          state.plan.forEach((slot) => {
+            if (slot.meal === oldName) slot.meal = meal.name;
+          });
+        }
+
+        resetMealForm();
         saveState();
         renderMeals();
         renderWeek();
       });
 
+      document.getElementById("cancel-edit").addEventListener("click", resetMealForm);
+
       document.getElementById("reset-plan").addEventListener("click", () => {
         localStorage.removeItem(storageKey);
+        localStorage.removeItem(legacyStorageKey);
+        localStorage.removeItem(`${storageKey}-shopping-selection`);
         window.location.reload();
       });
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           closePicker();
+          closeShopping();
           closeBank();
         }
       });
 
+      saveState();
       renderWeek();
       renderMeals();
     </script>
