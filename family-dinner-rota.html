@@ -180,7 +180,25 @@
         padding: 0 16px;
       }
 
+      .button-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--ink);
+        font-weight: 850;
+        padding: 0 16px;
+        text-decoration: none;
+      }
+
       button:hover {
+        border-color: #cfae82;
+      }
+
+      .button-link:hover {
         border-color: #cfae82;
       }
 
@@ -525,6 +543,15 @@
       .empty-note {
         color: var(--muted);
         font-size: 14px;
+      }
+
+      .recipe-source-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .recipe-source-note.is-error {
+        color: #9c3d35;
       }
 
       .shopping-layout {
@@ -914,6 +941,7 @@
           <button class="primary" type="button" id="suggest-plan">Suggest week</button>
           <button type="button" id="open-shopping">Shopping list</button>
           <button type="button" id="open-bank">Meal bank</button>
+          <a class="button-link" id="add-recipe-idea" href="https://docs.google.com/forms/d/e/1FAIpQLSc0gVpIYqdR7ADk7lCF4HdWjSx1IbEaG1KEouKKaufJLYkDKA/viewform?usp=publish-editor" target="_blank" rel="noopener">Add recipe idea</a>
         </div>
       </header>
 
@@ -1047,8 +1075,10 @@
       </form>
       <div class="drawer-actions">
         <button type="button" id="reset-plan">Reset demo</button>
+        <button type="button" id="refresh-recipes">Refresh shared recipes</button>
       </div>
-      <p class="empty-note">This saves in this browser only for now.</p>
+      <p class="empty-note">Manual meals save in this browser. Approved form recipes are shared from Google Sheets.</p>
+      <p class="recipe-source-note" id="recipe-source-note">Shared recipes have not loaded yet.</p>
       <div class="meal-list" id="meal-list"></div>
     </aside>
 
@@ -1099,6 +1129,7 @@
 
       const storageKey = "family-dinner-rota-v3";
       const legacyStorageKey = "family-dinner-rota-v2";
+      const recipeSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR01Lv3snR07jMT6Lq5Vs6M292ZXdNwoqSkU-l8TlS77nhcLZjzKd0Jujxq5hu51Ykv0Jr4np88uFlT/pub?output=csv";
       const state = loadState();
       let activeWeek = "Week 1";
       let activeSlot = null;
@@ -1106,6 +1137,7 @@
       let selectedShoppingMeals = new Set(loadShoppingSelection());
       let generatedShoppingItems = [];
       let shoppingStep = "choose";
+      let sharedRecipes = [];
 
       function loadState() {
         const saved = localStorage.getItem(storageKey);
@@ -1131,7 +1163,7 @@
           effort: meal.effort || "medium",
           tags: meal.tags || ["added"],
           icon: meal.icon || iconFor(meal.name),
-          recipeUrl: meal.recipeUrl || "",
+          recipeUrl: safeUrl(meal.recipeUrl || ""),
           ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : (defaultMatch?.ingredients || [])
         };
       }
@@ -1152,12 +1184,26 @@
         localStorage.setItem(`${storageKey}-shopping-selection`, JSON.stringify([...selectedShoppingMeals]));
       }
 
+      function uniqueMeals(meals) {
+        const seen = new Set();
+        return meals.filter((meal) => {
+          const key = meal.name.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function mealLibrary() {
+        return uniqueMeals([...state.meals.map(normalizeMeal), ...sharedRecipes.map(normalizeMeal)]);
+      }
+
       function allMeals() {
-        return [...state.meals.map(normalizeMeal), ...newRecipeIdeas];
+        return [...mealLibrary(), ...newRecipeIdeas];
       }
 
       function findMeal(name) {
-        return [...state.meals.map(normalizeMeal), ...newRecipeIdeas, ...flexibleMeals].find((meal) => meal.name === name) || {
+        return [...mealLibrary(), ...newRecipeIdeas, ...flexibleMeals].find((meal) => meal.name === name) || {
           name,
           shortName: shortenMeal(name),
           effort: "medium",
@@ -1190,6 +1236,124 @@
         if (lower.includes("lasagna") || lower.includes("tomato")) return "🍅";
         if (lower.includes("flexible")) return "🍽️";
         return "🥘";
+      }
+
+      function normalizeSheetEffort(value) {
+        const effort = value.toLowerCase();
+        if (effort.includes("easy") || effort.includes("low")) return "low";
+        if (effort.includes("cook")) return "cook";
+        return "medium";
+      }
+
+      function splitCellList(value) {
+        return value
+          .split(/\r?\n|;|,/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function splitIngredientList(value) {
+        return value
+          .split(/\r?\n|;/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function approvedForRota(value) {
+        return ["yes", "y", "true", "approved"].includes(value.trim().toLowerCase());
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let cell = "";
+        let inQuotes = false;
+        for (let index = 0; index < text.length; index += 1) {
+          const char = text[index];
+          const next = text[index + 1];
+          if (char === '"' && inQuotes && next === '"') {
+            cell += '"';
+            index += 1;
+          } else if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            row.push(cell);
+            cell = "";
+          } else if ((char === "\n" || char === "\r") && !inQuotes) {
+            if (char === "\r" && next === "\n") index += 1;
+            row.push(cell);
+            if (row.some((value) => value.trim())) rows.push(row);
+            row = [];
+            cell = "";
+          } else {
+            cell += char;
+          }
+        }
+        row.push(cell);
+        if (row.some((value) => value.trim())) rows.push(row);
+        return rows;
+      }
+
+      function sheetRowsToRecipes(csvText) {
+        const rows = parseCsv(csvText);
+        const headers = rows.shift()?.map((header) => header.trim()) || [];
+        const headerIndex = (name) => headers.findIndex((header) => header.toLowerCase() === name.toLowerCase());
+        const nameIndex = headerIndex("Recipe name");
+        const linkIndex = headerIndex("Recipe link");
+        const effortIndex = headerIndex("Effort level: easy / normal / cook");
+        const goodForIndex = headerIndex("Good for a...");
+        const ingredientIndex = headerIndex("Ingredients (Enter each new ingredient on a new line)");
+        const noteIndex = headerIndex("Notes");
+        const addedByIndex = headerIndex("Added By");
+        const approvedIndex = headerIndex("Approved for rota");
+
+        if (nameIndex === -1 || approvedIndex === -1) {
+          throw new Error("Recipe Sheet is missing required columns.");
+        }
+
+        return rows
+          .filter((row) => approvedForRota(row[approvedIndex] || ""))
+          .map((row) => {
+            const name = (row[nameIndex] || "").trim();
+            if (!name) return null;
+            const tags = [
+              "shared",
+              ...splitCellList(row[goodForIndex] || ""),
+              (row[addedByIndex] || "").trim() ? `added by ${(row[addedByIndex] || "").trim()}` : "",
+              (row[noteIndex] || "").trim() ? "has notes" : ""
+            ].filter(Boolean);
+            return normalizeMeal({
+              name,
+              shortName: shortenMeal(name),
+              effort: normalizeSheetEffort(row[effortIndex] || ""),
+              tags,
+              icon: iconFor(name),
+              recipeUrl: (row[linkIndex] || "").trim(),
+              ingredients: splitIngredientList(row[ingredientIndex] || "")
+            });
+          })
+          .filter(Boolean);
+      }
+
+      async function loadSharedRecipes() {
+        const note = document.getElementById("recipe-source-note");
+        note.textContent = "Loading approved recipes from Google Sheets...";
+        note.classList.remove("is-error");
+        try {
+          const response = await fetch(recipeSheetCsvUrl, { cache: "no-store" });
+          if (!response.ok) throw new Error("Recipe Sheet could not be loaded.");
+          const csvText = await response.text();
+          sharedRecipes = sheetRowsToRecipes(csvText);
+          note.textContent = sharedRecipes.length
+            ? `${sharedRecipes.length} approved shared recipe${sharedRecipes.length === 1 ? "" : "s"} loaded from Google Sheets.`
+            : "No approved shared recipes found yet.";
+          renderWeek();
+          renderMeals();
+        } catch (error) {
+          sharedRecipes = [];
+          note.textContent = "Shared recipes could not be loaded. Built-in and browser-saved meals are still available.";
+          note.classList.add("is-error");
+        }
       }
 
       function noteFor(slot) {
@@ -1230,14 +1394,14 @@
           card.innerHTML = `
             <div>
               <div class="day-meta">
-                <span class="day-label">${slot.day}</span>
-                <span class="tag">${labelFor(slot.type)}</span>
+                <span class="day-label">${escapeHtml(slot.day)}</span>
+                <span class="tag">${escapeHtml(labelFor(slot.type))}</span>
               </div>
-              <div class="meal-title">${meal.shortName}</div>
-              <p class="meal-note">${noteFor(slot)}</p>
+              <div class="meal-title">${escapeHtml(meal.shortName)}</div>
+              <p class="meal-note">${escapeHtml(noteFor(slot))}</p>
               ${meal.recipeUrl ? `<span class="recipe-link">Recipe saved</span>` : ""}
             </div>
-            <div class="meal-visual" aria-hidden="true">${meal.icon}</div>
+            <div class="meal-visual" aria-hidden="true">${escapeHtml(meal.icon)}</div>
           `;
           card.addEventListener("click", () => openPicker(slot));
           root.append(card);
@@ -1246,9 +1410,9 @@
 
       function recommendedMeals(slot) {
         if (slot.type === "flexible") return flexibleMeals;
-        if (slot.type === "new") return [...newRecipeIdeas, ...state.meals.map(normalizeMeal)];
+        if (slot.type === "new") return [...newRecipeIdeas, ...mealLibrary()];
 
-        const meals = state.meals.map(normalizeMeal);
+        const meals = mealLibrary();
         const low = meals.filter((meal) => meal.effort === "low");
         const medium = meals.filter((meal) => meal.effort === "medium");
         const cook = meals.filter((meal) => meal.effort === "cook");
@@ -1315,14 +1479,14 @@
           card.type = "button";
           card.innerHTML = `
             <div>
-              <strong>${meal.shortName}</strong>
+              <strong>${escapeHtml(meal.shortName)}</strong>
               <div class="meal-tags">
-                <span class="tag">${meal.effort}</span>
-                ${meal.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+                <span class="tag">${escapeHtml(meal.effort)}</span>
+                ${meal.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
               </div>
               ${meal.recipeUrl ? `<span class="recipe-link">Recipe saved</span>` : ""}
             </div>
-            <span class="meal-visual" aria-hidden="true">${meal.icon}</span>
+            <span class="meal-visual" aria-hidden="true">${escapeHtml(meal.icon)}</span>
           `;
           card.addEventListener("click", () => {
             activeSlot.meal = meal.name;
@@ -1354,25 +1518,35 @@
       function renderMeals() {
         const root = document.getElementById("meal-list");
         root.innerHTML = "";
-        state.meals.map(normalizeMeal).forEach((meal, index) => {
+        const localMeals = state.meals.map(normalizeMeal);
+        const localNames = new Set(localMeals.map((meal) => meal.name.toLowerCase()));
+        const visibleMeals = [
+          ...localMeals.map((meal, index) => ({ meal, index, source: "local" })),
+          ...sharedRecipes
+            .map(normalizeMeal)
+            .filter((meal) => !localNames.has(meal.name.toLowerCase()))
+            .map((meal) => ({ meal, index: null, source: "shared" }))
+        ];
+
+        visibleMeals.forEach(({ meal, index, source }) => {
           const card = document.createElement("article");
           card.className = "meal-bank-card";
           card.innerHTML = `
             <div>
-              <strong>${meal.shortName}</strong>
+              <strong>${escapeHtml(meal.shortName)}</strong>
               <div class="meal-tags">
-                <span class="tag">${meal.effort}</span>
-                ${meal.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
+                <span class="tag">${escapeHtml(meal.effort)}</span>
+                ${meal.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
                 ${meal.ingredients.length ? `<span class="tag">${meal.ingredients.length} ingredients</span>` : ""}
               </div>
-              ${meal.recipeUrl ? `<a class="recipe-link" href="${meal.recipeUrl}" target="_blank" rel="noopener">Open recipe</a>` : ""}
-              <div class="meal-card-actions">
-                <button type="button" data-edit-index="${index}">Edit</button>
-              </div>
+              ${meal.recipeUrl ? `<a class="recipe-link" href="${escapeAttr(meal.recipeUrl)}" target="_blank" rel="noopener">Open recipe</a>` : ""}
+              ${source === "local" ? `<div class="meal-card-actions">
+                  <button type="button" data-edit-index="${index}">Edit</button>
+                </div>` : ""}
             </div>
-            <span class="meal-visual" aria-hidden="true">${meal.icon}</span>
+            <span class="meal-visual" aria-hidden="true">${escapeHtml(meal.icon)}</span>
           `;
-          card.querySelector("[data-edit-index]").addEventListener("click", () => editMeal(index));
+          card.querySelector("[data-edit-index]")?.addEventListener("click", () => editMeal(index));
           root.append(card);
         });
       }
@@ -1527,7 +1701,7 @@
           ${generatedShoppingItems.length ? `<div class="shopping-list-scroll"><ul class="shopping-list">${generatedShoppingItems.map((item) => `
               <li data-item-id="${item.id}">
                 <input type="text" value="${escapeAttr(item.text)}" aria-label="Shopping item">
-                <span class="shopping-source">${item.meals.join(", ")}</span>
+                <span class="shopping-source">${escapeHtml(item.meals.join(", "))}</span>
                 <button class="remove-item" type="button" aria-label="Remove ${escapeAttr(item.text)}">x</button>
               </li>
             `).join("")}</ul></div>` : `<span>Select meals and generate a list. Add ingredients to meals in the Meal bank if nothing appears.</span>`}
@@ -1567,6 +1741,21 @@
         return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
       }
 
+      function escapeHtml(value) {
+        return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+      }
+
+      function safeUrl(value) {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) return "";
+        try {
+          const url = new URL(trimmed);
+          return ["http:", "https:"].includes(url.protocol) ? trimmed : "";
+        } catch {
+          return "";
+        }
+      }
+
       function shoppingListText() {
         if (!generatedShoppingItems.length) generateShoppingItems();
         const lines = generatedShoppingItems
@@ -1602,6 +1791,7 @@
       document.getElementById("suggest-plan").addEventListener("click", suggestWeek);
       document.getElementById("open-bank").addEventListener("click", openBank);
       document.getElementById("open-shopping").addEventListener("click", openShopping);
+      document.getElementById("refresh-recipes").addEventListener("click", loadSharedRecipes);
       document.getElementById("close-bank").addEventListener("click", closeBank);
       document.getElementById("close-picker").addEventListener("click", closePicker);
       document.getElementById("close-shopping").addEventListener("click", closeShopping);
@@ -1694,6 +1884,7 @@
       saveState();
       renderWeek();
       renderMeals();
+      loadSharedRecipes();
     </script>
   </body>
 </html>
