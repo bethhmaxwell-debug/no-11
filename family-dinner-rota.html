@@ -517,41 +517,24 @@
         transform: translateX(0);
       }
 
-      .meal-form {
+      .recipe-add-card {
         display: grid;
-        gap: 10px;
-        margin-bottom: 18px;
+        gap: 12px;
+        margin: 0 0 18px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: #fff;
+        padding: 16px;
       }
 
-      .field {
-        display: grid;
-        gap: 7px;
+      .recipe-add-card strong {
+        display: block;
+        font-size: 18px;
       }
 
-      .field span {
-        color: var(--ink);
-        font-size: 13px;
-        font-weight: 900;
-      }
-
-      .form-help {
+      .recipe-add-card span {
         color: var(--muted);
-        font-size: 12px;
-      }
-
-      .meal-form-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 120px;
-        gap: 10px;
-      }
-
-      .meal-form-actions {
-        display: flex;
-        gap: 10px;
-      }
-
-      .meal-form-actions button {
-        flex: 1 1 0;
+        font-size: 14px;
       }
 
       .empty-note {
@@ -889,14 +872,6 @@
           grid-template-columns: minmax(0, 1fr) auto;
         }
 
-        .meal-form-row {
-          grid-template-columns: 1fr;
-        }
-
-        .meal-form-actions {
-          flex-direction: column;
-        }
-
         .shopping-list li {
           grid-template-columns: 1fr auto;
         }
@@ -1053,47 +1028,19 @@
         <button class="icon-button" type="button" id="close-bank" aria-label="Close meal bank">x</button>
       </div>
 
-      <a class="button-link" id="add-recipe-idea-bank" href="https://docs.google.com/forms/d/e/1FAIpQLSc0gVpIYqdR7ADk7lCF4HdWjSx1IbEaG1KEouKKaufJLYkDKA/viewform?usp=publish-editor" target="_blank" rel="noopener">Add recipe via Google Form</a>
+      <div class="recipe-add-card">
+        <div>
+          <strong>Add a recipe idea</strong>
+          <span>Use the shared Google Form. Approved recipes will appear here from Google Sheets.</span>
+        </div>
+        <a class="button-link" id="add-recipe-idea-bank" href="https://docs.google.com/forms/d/e/1FAIpQLSc0gVpIYqdR7ADk7lCF4HdWjSx1IbEaG1KEouKKaufJLYkDKA/viewform?usp=publish-editor" target="_blank" rel="noopener">Add via Google Form</a>
+      </div>
 
-      <form class="meal-form" id="meal-form">
-        <input type="hidden" id="editing-meal-index" value="">
-        <label class="field">
-          <span>Dinner name</span>
-          <input id="meal-name" type="text" placeholder="Add a regular dinner">
-        </label>
-        <div class="meal-form-row">
-          <label class="field">
-            <span>Effort</span>
-            <select id="meal-effort" aria-label="Meal effort">
-              <option value="low">low effort</option>
-              <option value="medium">medium</option>
-              <option value="cook">cook night</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>Icon</span>
-            <input id="meal-icon" type="text" maxlength="4" placeholder="🍝">
-          </label>
-        </div>
-        <label class="field">
-          <span>Recipe link</span>
-          <input id="meal-url" type="url" placeholder="https://...">
-        </label>
-        <label class="field">
-          <span>Ingredients</span>
-          <textarea id="meal-ingredients" placeholder="One ingredient per line"></textarea>
-          <span class="form-help">These are remembered in this browser and used for the shopping list.</span>
-        </label>
-        <div class="meal-form-actions">
-          <button class="primary" type="submit" id="save-meal">Add meal</button>
-          <button type="button" id="cancel-edit">Clear</button>
-        </div>
-      </form>
       <div class="drawer-actions">
         <button type="button" id="reset-plan">Reset demo</button>
         <button type="button" id="refresh-recipes">Refresh shared recipes</button>
       </div>
-      <p class="empty-note">Manual meals save in this browser. Approved form recipes are shared from Google Sheets.</p>
+      <p class="empty-note">Recipes are added through the form, approved in Google Sheets, then loaded into this bank.</p>
       <p class="recipe-source-note" id="recipe-source-note">Shared recipes have not loaded yet.</p>
       <div class="meal-list" id="meal-list"></div>
     </aside>
@@ -1587,17 +1534,7 @@
       function renderMeals() {
         const root = document.getElementById("meal-list");
         root.innerHTML = "";
-        const localMeals = state.meals.map(normalizeMeal);
-        const localNames = new Set(localMeals.map((meal) => meal.name.toLowerCase()));
-        const visibleMeals = [
-          ...localMeals.map((meal, index) => ({ meal, index, source: "local" })),
-          ...sharedRecipes
-            .map(normalizeMeal)
-            .filter((meal) => !localNames.has(meal.name.toLowerCase()))
-            .map((meal) => ({ meal, index: null, source: "shared" }))
-        ];
-
-        visibleMeals.forEach(({ meal, index, source }) => {
+        mealLibrary().forEach((meal) => {
           const card = document.createElement("article");
           card.className = "meal-bank-card";
           card.innerHTML = `
@@ -1609,44 +1546,11 @@
                 ${meal.ingredients.length ? `<span class="tag">${meal.ingredients.length} ingredients</span>` : ""}
               </div>
               ${meal.recipeUrl ? `<a class="recipe-link" href="${escapeAttr(meal.recipeUrl)}" target="_blank" rel="noopener">Open recipe</a>` : ""}
-              ${source === "local" ? `<div class="meal-card-actions">
-                  <button type="button" data-edit-index="${index}">Edit</button>
-                </div>` : ""}
             </div>
             <span class="meal-visual" aria-hidden="true">${escapeHtml(meal.icon)}</span>
           `;
-          card.querySelector("[data-edit-index]")?.addEventListener("click", () => editMeal(index));
           root.append(card);
         });
-      }
-
-      function resetMealForm() {
-        document.getElementById("editing-meal-index").value = "";
-        document.getElementById("meal-name").value = "";
-        document.getElementById("meal-effort").value = "low";
-        document.getElementById("meal-icon").value = "";
-        document.getElementById("meal-url").value = "";
-        document.getElementById("meal-ingredients").value = "";
-        document.getElementById("save-meal").textContent = "Add meal";
-      }
-
-      function editMeal(index) {
-        const meal = normalizeMeal(state.meals[index]);
-        document.getElementById("editing-meal-index").value = String(index);
-        document.getElementById("meal-name").value = meal.name;
-        document.getElementById("meal-effort").value = meal.effort;
-        document.getElementById("meal-icon").value = meal.icon;
-        document.getElementById("meal-url").value = meal.recipeUrl;
-        document.getElementById("meal-ingredients").value = meal.ingredients.join("\n");
-        document.getElementById("save-meal").textContent = "Save meal";
-        document.getElementById("meal-name").focus();
-      }
-
-      function ingredientsFromTextarea(value) {
-        return value
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean);
       }
 
       function openBank() {
@@ -1896,44 +1800,6 @@
       document.getElementById("shopping-overlay").addEventListener("click", (event) => {
         if (event.target.id === "shopping-overlay") closeShopping();
       });
-
-      document.getElementById("meal-form").addEventListener("submit", (event) => {
-        event.preventDefault();
-        const name = document.getElementById("meal-name").value.trim();
-        const effort = document.getElementById("meal-effort").value;
-        const icon = document.getElementById("meal-icon").value.trim() || iconFor(name);
-        const recipeUrl = document.getElementById("meal-url").value.trim();
-        const ingredients = ingredientsFromTextarea(document.getElementById("meal-ingredients").value);
-        const editingIndex = document.getElementById("editing-meal-index").value;
-        if (!name) return;
-
-        const meal = {
-          name,
-          shortName: shortenMeal(name),
-          effort,
-          tags: editingIndex === "" ? ["added"] : state.meals[Number(editingIndex)].tags,
-          icon,
-          recipeUrl,
-          ingredients
-        };
-
-        if (editingIndex === "") {
-          state.meals.push(meal);
-        } else {
-          const oldName = state.meals[Number(editingIndex)].name;
-          state.meals[Number(editingIndex)] = meal;
-          state.plan.forEach((slot) => {
-            if (slot.meal === oldName) slot.meal = meal.name;
-          });
-        }
-
-        resetMealForm();
-        saveState();
-        renderMeals();
-        renderWeek();
-      });
-
-      document.getElementById("cancel-edit").addEventListener("click", resetMealForm);
 
       document.getElementById("reset-plan").addEventListener("click", () => {
         localStorage.removeItem(storageKey);
