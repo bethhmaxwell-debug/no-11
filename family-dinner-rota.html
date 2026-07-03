@@ -299,6 +299,20 @@
         border-color: #d5b17d;
       }
 
+      .day-card[draggable="true"] {
+        cursor: grab;
+      }
+
+      .day-card.is-dragging {
+        opacity: .58;
+        transform: scale(.98);
+      }
+
+      .day-card.is-drop-target {
+        outline: 3px solid rgba(47, 109, 79, .42);
+        outline-offset: 3px;
+      }
+
       .day-card.busy {
         background: var(--gold);
       }
@@ -960,8 +974,8 @@
         <div class="week-board" id="week-board"></div>
         <div class="weekend-strip" id="weekend-strip"></div>
         <div class="hint-card">
-          <strong>Tap a dinner card to change it.</strong>
-          <span>Meal suggestions are filtered by the kind of day: easy dinners first on busy nights, cook-from-scratch ideas first on Wednesday and Friday.</span>
+          <strong>Tap a dinner card to change it, or drag meals between days.</strong>
+          <span>Meal suggestions are filtered by the kind of day. Dragging swaps the two dinners so the fortnight stays filled.</span>
         </div>
       </section>
     </main>
@@ -1038,6 +1052,8 @@
         </div>
         <button class="icon-button" type="button" id="close-bank" aria-label="Close meal bank">x</button>
       </div>
+
+      <a class="button-link" id="add-recipe-idea-bank" href="https://docs.google.com/forms/d/e/1FAIpQLSc0gVpIYqdR7ADk7lCF4HdWjSx1IbEaG1KEouKKaufJLYkDKA/viewform?usp=publish-editor" target="_blank" rel="noopener">Add recipe via Google Form</a>
 
       <form class="meal-form" id="meal-form">
         <input type="hidden" id="editing-meal-index" value="">
@@ -1138,6 +1154,7 @@
       let generatedShoppingItems = [];
       let shoppingStep = "choose";
       let sharedRecipes = [];
+      let draggedSlotId = "";
 
       function loadState() {
         const saved = localStorage.getItem(storageKey);
@@ -1389,8 +1406,12 @@
         slots.forEach((slot) => {
           const meal = findMeal(slot.meal);
           const card = document.createElement("button");
+          const slotId = slotKey(slot);
           card.className = `day-card ${slot.type}`;
           card.type = "button";
+          card.draggable = true;
+          card.dataset.slotId = slotId;
+          card.setAttribute("aria-label", `${slot.week} ${slot.day}: ${meal.shortName}. Drag to swap with another day or tap to change dinner.`);
           card.innerHTML = `
             <div>
               <div class="day-meta">
@@ -1404,8 +1425,56 @@
             <div class="meal-visual" aria-hidden="true">${escapeHtml(meal.icon)}</div>
           `;
           card.addEventListener("click", () => openPicker(slot));
+          card.addEventListener("dragstart", (event) => {
+            draggedSlotId = slotId;
+            card.classList.add("is-dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", slotId);
+          });
+          card.addEventListener("dragend", () => {
+            draggedSlotId = "";
+            document.querySelectorAll(".day-card.is-dragging, .day-card.is-drop-target").forEach((item) => {
+              item.classList.remove("is-dragging", "is-drop-target");
+            });
+          });
+          card.addEventListener("dragover", (event) => {
+            const sourceId = event.dataTransfer.getData("text/plain") || draggedSlotId;
+            if (!sourceId || sourceId === slotId) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            card.classList.add("is-drop-target");
+          });
+          card.addEventListener("dragleave", () => {
+            card.classList.remove("is-drop-target");
+          });
+          card.addEventListener("drop", (event) => {
+            event.preventDefault();
+            card.classList.remove("is-drop-target");
+            const sourceId = event.dataTransfer.getData("text/plain") || draggedSlotId;
+            swapSlotMeals(sourceId, slotId);
+          });
           root.append(card);
         });
+      }
+
+      function slotKey(slot) {
+        return `${slot.week}::${slot.day}`;
+      }
+
+      function findPlanSlot(slotId) {
+        return state.plan.find((slot) => slotKey(slot) === slotId);
+      }
+
+      function swapSlotMeals(sourceId, targetId) {
+        if (!sourceId || !targetId || sourceId === targetId) return;
+        const source = findPlanSlot(sourceId);
+        const target = findPlanSlot(targetId);
+        if (!source || !target) return;
+        const sourceMeal = source.meal;
+        source.meal = target.meal;
+        target.meal = sourceMeal;
+        saveState();
+        renderWeek();
       }
 
       function recommendedMeals(slot) {
